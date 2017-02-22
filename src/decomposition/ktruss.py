@@ -6,17 +6,51 @@ class KTruss(object):
     """K-truss decomposition"""
     def __init__(self, graph):
         super(KTruss, self).__init__()
-        self.graph = graph
+        self.graph = graph.copy()
 
-    def decomposition(self, k = 2):
+    def decomposition(self, graph=None, k = 3):
+        """
+        Returns the subgraph with the nodes whose core number are greater
+        than k
+        """
+        if graph is None:
+            graph = self.graph
         complete = False
         while not complete:
             complete = True
-            for n in self.graph.nodes():
-                if nx.triangles(self.graph,n) < k:
-                    self.graph.remove_node(n)
+            remove = []
+            # Nodes with degree less than k-2 cannot have edges in k-truss
+            degree = graph.degree()
+            for n in degree:
+                if degree[n] < k - 2:
+                    graph.remove_node(n)
+
+            # Truss number of remaining
+            for e in graph.edges():
+                triangles = len(list(nx.common_neighbors(graph, e[0], e[1])))
+                if triangles < k - 2:
+                    remove.append(e)
                     complete = False
-        return self.graph
+            graph.remove_edges_from(remove)
+            print(k, len(remove), graph.number_of_edges())
+        return graph
+
+    def trussNumber(self, graph=None):
+        if graph is None:
+            graph = self.graph
+        else:
+            graph = graph.copy()
+
+        tnumber = {}
+        k = 3
+
+        while graph.number_of_edges() > 0:
+            print('k',k)
+            graph = self.decomposition(graph, k)
+            for e in graph.edges():
+                tnumber[e] = k
+            k += 1
+        return tnumber
 
 if __name__ == '__main__':
     fname = sys.argv[1]

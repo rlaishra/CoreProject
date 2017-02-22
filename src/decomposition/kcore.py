@@ -6,29 +6,36 @@ class KCore(object):
     """K-core decomposition"""
     def __init__(self, graph):
         super(KCore, self).__init__()
-        self.graph = graph
+        self.graph = graph.copy()
 
-    def decomposition(self, k = 2):
+    def decomposition(self, graph=None, k = 2):
         """
         Returns the subgraph with the nodes whose core number are greater
         than k
         """
+        if graph is None:
+            graph = self.graph
         complete = False
         while not complete:
             complete = True
-            degree = self.graph.degree()
+            degree = graph.degree()
             for n in degree:
                 if degree[n] < k:
-                    self.graph.remove_node(n)
+                    graph.remove_node(n)
                     complete = False
-        return self.graph
+        return graph
 
-    def coreNumber(self):
-        cnumber = {n:0 for n in self.graph.nodes()}
+    def coreNumber(self, graph=None):
+        if graph is None:
+            graph = self.graph
+        else:
+            graph = graph.copy()
+
+        cnumber = {}
         k = 1
-        while self.graph.number_of_nodes() > 0:
-            self.graph = self.decomposition(k)
-            for n in self.graph.nodes():
+        while graph.number_of_nodes() > 0:
+            graph = self.decomposition(graph, k)
+            for n in graph.nodes():
                 cnumber[n] = k
             k += 1
         return cnumber
