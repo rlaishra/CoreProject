@@ -17,12 +17,12 @@ class KCore(object):
             graph = self.graph
         complete = False
         while not complete:
-            complete = True
             degree = graph.degree()
-            for n in degree:
-                if degree[n] < k:
-                    graph.remove_node(n)
-                    complete = False
+            remove = [n for n in degree if degree[n] < k]
+            complete = len(remove) < 1
+            graph.remove_nodes_from(remove)
+            #print('k: {} \t Nodes removed: {} \t Nodes left: {}'.format(k,\
+            # len(remove), graph.number_of_nodes()))
         return graph
 
     def coreNumber(self, graph=None):

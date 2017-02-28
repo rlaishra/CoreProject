@@ -46,11 +46,11 @@ drawNodesFoundCore <- function(fname, t) {
 
 drawKendallCorrelation <- function(fname, t) {
   data <- read.csv(file = fname, sep = ',')
-  pl <- ggplot(data = data, aes(x=missing))
-  pl <- pl + geom_point(aes(y = correlation, color='All'))
-  pl <- pl + geom_point(aes(y = correlation_20, color='Top 20%'))
-  #pl <- pl + geom_point(aes(y = correlation_10, color='Top 10%'))
- #pl <- pl + geom_point(aes(y = correlation_5, color='Top 5%'))
+  pl <- ggplot(data = data, aes(x=change))
+  pl <- pl + geom_jitter(aes(y = correlation_100, color='All'))
+  pl <- pl + geom_jitter(aes(y = correlation_20, color='Top 20%'))
+  pl <- pl + geom_jitter(aes(y = correlation_10, color='Top 10%'))
+  pl <- pl + geom_jitter(aes(y = correlation_5, color='Top 5%'))
   
   if(t == 'n'){
     pl <- pl + labs(x='Missing Nodes (%)', y='Kendal Tau Correlation')

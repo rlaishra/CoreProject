@@ -9,14 +9,21 @@ import numpy as np
 from scipy import stats
 import os.path
 import pickle
+from noise import rewire
 
 class KCoreExperiment(object):
     """docstring for KCoreExperiment."""
-    def __init__(self, fname, sname, adjacency=False):
+    def __init__(self, fname, sname, adjacency=False, mode='111'):
         super(KCoreExperiment, self).__init__()
         self.fname = fname
         self.sname = sname
         self.adj = adjacency
+        """
+        1st digit for random node deletion,
+        2nd digit for random edge deletion,
+        3rd digit for random rewiring preserving degree dist
+        """
+        self.mode = mode
         if not self.adj:
             self.graph = nx.read_edgelist(self.fname)
         else:
@@ -24,6 +31,7 @@ class KCoreExperiment(object):
         self.kcore = kcore.KCore(self.graph)
         self.number_of_nodes = self.graph.number_of_nodes()
         self.number_of_edges = self.graph.number_of_edges()
+        self.top = [1, 0.2, 0.1, 0.05]                  # Percentage of top nodes consider
 
 
     def readCache(self):
@@ -69,14 +77,25 @@ class KCoreExperiment(object):
             cnumber[i*step] = self.coreNumber()
         return cnumber
 
-    def runExperimentEdges(self, step = 5, end = 50):
+    def runExperimentEdges(self, step = 5, end = 50, mode=0):
+        """
+        mode
+            0   random edge delete
+            1   random edge rewiring
+        """
         cnumber = {0:self.coreNumber(can_cache=True)}
-
-        noise = missing.MissingData()
         size = int(self.graph.number_of_edges()*step*0.01)
 
+        if mode == 0:
+            noise = missing.MissingData()
+        elif mode == 1:
+            noise = rewire.RewireEdges()
+
         for i in xrange(1, int(end/step)):
-            self.graph = noise.removeRandomEdges(self.graph, size)
+            if mode == 0:
+                self.graph = noise.removeRandomEdges(self.graph, size)
+            elif mode == 1:
+                self.graph = noise.rewire(self.graph, size)
             cnumber[i*step] = self.coreNumber()
 
         return cnumber
@@ -104,7 +123,11 @@ class KCoreExperiment(object):
         fname = self.sname + '_core_' + iden + '.csv'
         with open(fname, 'w') as f:
             writer = csv.writer(f, delimiter=',')
-            writer.writerow(['missing', 'correlation', 'pvalue', 'correlation_20', 'pvalue_20', 'correlation_10', 'pvalue_10', 'correlation_5', 'pvalue_5'])
+            header = ['change']
+            for p in self.top:
+                v = str(int(p*100))
+                header += ['correlation_'+v, 'pvalue_'+v]
+            writer.writerow(header)
             for d in data:
                 writer.writerow(d)
 
@@ -115,156 +138,125 @@ class KCoreExperiment(object):
             for d in data:
                 writer.writerow(d)
 
-    def runExperiment(self, iter=10, step = 5, end = 50):
+    def processHistogram(self, histogram, identifier):
+        if histogram is None:
+            histogram = {p: {x:{} for x in xrange(0, end, step)} for p in self.top}
+        for p in histogram:
+            hist = histogram[p]
+            hdata = [['core_number'] + ['change_'+str(i) for i in hist]]
+            for k in xrange(1, int(max([max(hist[h].keys()) for h in hist]))):
+                t_hdata = [k]
+                for i in hist:
+                    if k in hist[i]:
+                        t_hdata.append(np.mean(hist[i][k]))
+                    else:
+                        t_hdata.append(0)
+                hdata.append(t_hdata)
+            self.saveHistogram(hdata, identifier+'_top_'+str(int(p*100)))
+
+    def getHistogram(self, x2, histogram, i, p):
+        hist, sep = np.histogram(x2, bins=max(x2)-min(x2))
+        for s in sep[:-1]:
+            if s not in histogram[p][i]:
+                histogram[p][i][s] = []
+
+        for k, v in enumerate(hist):
+            histogram[p][i][sep[k]].append(v)
+
+    def newHistogram(self, step, end):
+        return {p: {x:{} for x in xrange(0, end, step)} for p in self.top}
+
+    def expRandomMissingNodes(self, iter, step, end):
         data = []
-        histogram = {x:{} for x in xrange(0, end, step)}
+        histogram = self.newHistogram(step, end)
 
         for _ in xrange(0,iter):
             self.readData()
             cnumber = self.runExperimentNode(step, end)
             all_nodes = set([n for n in cnumber[0]])
             for i in cnumber:
-                t_data = []
-
+                t_data = [i]
                 common_nodes = list(all_nodes.intersection([n for n in cnumber[i]]))
-                x1 = [cnumber[0][n] for n in common_nodes]
-                x2 = [cnumber[i][n] for n in common_nodes]
-                tau, p_value = stats.kendalltau(x1, x2)
-                t_data += [i, tau, p_value]
-
-                common_nodes = self.selectTopN(cnumber[0], common_nodes, self.number_of_nodes * 0.2)
-                x1 = [cnumber[0][n] for n in common_nodes]
-                x2 = [cnumber[i][n] for n in common_nodes]
-                tau, p_value = stats.kendalltau(x1, x2)
-                t_data += [tau, p_value]
-                hist, sep = np.histogram(x2, bins=max(x2)-min(x2))
-                for s in sep[:-1]:
-                    if s not in histogram[i]:
-                        histogram[i][s] = []
-
-                for k, v in enumerate(hist):
-                    histogram[i][sep[k]].append(v)
-
-                common_nodes = self.selectTopN(cnumber[0], common_nodes, self.number_of_nodes * 0.1)
-                x1 = [cnumber[0][n] for n in common_nodes]
-                x2 = [cnumber[i][n] for n in common_nodes]
-                tau, p_value = stats.kendalltau(x1, x2)
-                t_data += [tau, p_value]
-
-                common_nodes = self.selectTopN(cnumber[0], common_nodes, self.number_of_nodes * 0.05)
-                x1 = [cnumber[0][n] for n in common_nodes]
-                x2 = [cnumber[i][n] for n in common_nodes]
-                tau, p_value = stats.kendalltau(x1, x2)
-                t_data += [tau, p_value]
+                for p in self.top:
+                    common_nodes = self.selectTopN(cnumber[0], common_nodes,\
+                     self.number_of_nodes * p)
+                    x1 = [cnumber[0][n] for n in common_nodes]
+                    x2 = [cnumber[i][n] for n in common_nodes]
+                    tau, p_value = stats.kendalltau(x1, x2)
+                    t_data += [tau, p_value]
+                    self.getHistogram(x2, histogram, i, p)
 
                 data.append(t_data)
                 print(t_data)
-        hdata = [['core_number'] + ['missing_'+str(i) for i in histogram]]
-        for k in xrange(1, int(max([max(histogram[h].keys()) for h in histogram]))):
-            t_hdata = [k]
-            for i in histogram:
-                if k in histogram[i]:
-                    t_hdata.append(np.mean(histogram[i][k]))
-                else:
-                    t_hdata.append(0)
-            hdata.append(t_hdata)
 
-        self.saveHistogram(hdata, 'nodes')
-        self.saveResults(data, 'nodes')
+        self.processHistogram(histogram, 'nodes_delete_random')
+        self.saveResults(data, 'nodes_delete_random')
 
+    def expRandomMissingEdges(self, iter, step, end):
         data = []
-        histogram = {x:{} for x in xrange(0, end, step)}
+        histogram = self.newHistogram(step, end)
+
         for _ in xrange(0,iter):
             self.readData()
-            cnumber = self.runExperimentEdges(step, end)
+            cnumber = self.runExperimentEdges(step, end, mode=0)
             all_nodes = set([n for n in cnumber[0]])
             for i in cnumber:
-                t_data = []
+                t_data = [i]
                 common_nodes = list(all_nodes.intersection([n for n in cnumber[i]]))
-                x1 = [cnumber[0][n] for n in common_nodes]
-                x2 = [cnumber[i][n] for n in common_nodes]
-                tau, p_value = stats.kendalltau(x1, x2)
-                t_data += [i, tau, p_value]
-
-                common_nodes = self.selectTopN(cnumber[0], common_nodes, self.number_of_nodes * 0.2)
-                x1 = [cnumber[0][n] for n in common_nodes]
-                x2 = [cnumber[i][n] for n in common_nodes]
-                tau, p_value = stats.kendalltau(x1, x2)
-                t_data += [tau, p_value]
-                hist, sep = np.histogram(x2, bins=max(x2)-min(x2))
-                for s in sep[:-1]:
-                    if s not in histogram[i]:
-                        histogram[i][s] = []
-
-                for k, v in enumerate(hist):
-                    histogram[i][sep[k]].append(v)
-
-                common_nodes = self.selectTopN(cnumber[0], common_nodes, self.number_of_nodes * 0.1)
-                x1 = [cnumber[0][n] for n in common_nodes]
-                x2 = [cnumber[i][n] for n in common_nodes]
-                tau, p_value = stats.kendalltau(x1, x2)
-                t_data += [tau, p_value]
-
-                common_nodes= self.selectTopN(cnumber[0], common_nodes, self.number_of_nodes * 0.05)
-                x1 = [cnumber[0][n] for n in common_nodes]
-                x2 = [cnumber[i][n] for n in common_nodes]
-                tau, p_value = stats.kendalltau(x1, x2)
-                t_data += [tau, p_value]
+                for p in self.top:
+                    common_nodes = self.selectTopN(cnumber[0], common_nodes,\
+                     self.number_of_nodes * p)
+                    x1 = [cnumber[0][n] for n in common_nodes]
+                    x2 = [cnumber[i][n] for n in common_nodes]
+                    tau, p_value = stats.kendalltau(x1, x2)
+                    t_data += [tau, p_value]
+                    self.getHistogram(x2, histogram, i, p)
 
                 data.append(t_data)
                 print(t_data)
 
-        hdata = [['core_number'] + ['missing_'+str(i) for i in histogram]]
-        #print([histogram[k].keys() for h in histogram])
-        for k in xrange(1, int(max([max(histogram[h].keys()) for h in histogram]))):
-            t_hdata = [k]
-            for i in histogram:
-                if k in histogram[i]:
-                    t_hdata.append(np.mean(histogram[i][k]))
-                else:
-                    t_hdata.append(0)
-            hdata.append(t_hdata)
+        self.processHistogram(histogram, 'edges_delete_random')
+        self.saveResults(data, 'edges_delete_random')
 
-        self.saveHistogram(hdata, 'edges')
-        self.saveResults(data, 'edges')
+    def expRandomRewireEdges(self, iter, step, end):
+        data = []
+        histogram = self.newHistogram(step, end)
 
-"""
-def kcore(graph, k = 2):
-    cgraph = graph.copy()
-    complete = False
-    while not complete:
-        complete = True
-        degree = cgraph.degree()
-        for n in degree:
-            if degree[n] < k:
-                cgraph.remove_node(n)
-                complete = False
-    return cgraph
+        for _ in xrange(0,iter):
+            self.readData()
+            cnumber = self.runExperimentEdges(step, end, mode=1)
+            all_nodes = set([n for n in cnumber[0]])
+            for i in cnumber:
+                t_data = [i]
+                common_nodes = list(all_nodes.intersection([n for n in cnumber[i]]))
+                for p in self.top:
+                    common_nodes = self.selectTopN(cnumber[0], common_nodes,\
+                     self.number_of_nodes * p)
+                    x1 = [cnumber[0][n] for n in common_nodes]
+                    x2 = [cnumber[i][n] for n in common_nodes]
+                    tau, p_value = stats.kendalltau(x1, x2)
+                    t_data += [tau, p_value]
+                    self.getHistogram(x2, histogram, i, p)
 
-def coreNumber(graph):
-    pass
+                data.append(t_data)
+                print(t_data)
 
-def removeNodes(graph, missing):
-    cgraph = graph.copy()
-    count = int(graph.number_of_nodes() * missing * 0.01)
-    remove = random.sample([n for n in graph.nodes()], count)
-    cgraph.remove_nodes_from(remove)
-    return cgraph
+        self.processHistogram(histogram, 'edges_rewire_random')
+        self.saveResults(data, 'edges_rewire_random')
 
-def removeEdges(graph, missing):
-    cgraph = graph.copy()
-    count = int(graph.number_of_edges() * missing * 0.01)
-    remove = random.sample([n for n in graph.edges()], count)
-    cgraph.remove_edges_from(remove)
-    return cgraph
+    def runExperiment(self, iter=10, step = 5, end = 50):
+        if self.mode[0] is '1':
+            print('Noise: \t Random node deletion')
+            self.expRandomMissingNodes(iter, step, end)
 
-def saveResults(data, sname, mtype):
-    fname = sname + '_' + mtype + '.csv'
-    with open(fname, 'w') as f:
-        writer = csv.writer(f, delimiter=',')
-        for d in data:
-            writer.writerow(d)
-"""
+        if self.mode[1] is '1':
+            print('Noise: \t Random edge deletion')
+            self.expRandomMissingEdges(iter, step, end)
+
+        if self.mode[2] is '1':
+            print('Noise: \t Random edge rewire preserving degree dist')
+            self.expRandomRewireEdges(iter, step, end)
+
 
 if __name__ == '__main__':
     fname = sys.argv[1]
