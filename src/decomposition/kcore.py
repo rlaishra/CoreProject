@@ -21,8 +21,8 @@ class KCore(object):
             remove = [n for n in degree if degree[n] < k]
             complete = len(remove) < 1
             graph.remove_nodes_from(remove)
-            #print('k: {} \t Nodes removed: {} \t Nodes left: {}'.format(k,\
-            # len(remove), graph.number_of_nodes()))
+            print('k: {} \t Nodes removed: {} \t Nodes left: {}'.format(k,\
+             len(remove), graph.number_of_nodes()))
         return graph
 
     def coreNumber(self, graph=None):

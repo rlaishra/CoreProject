@@ -10,6 +10,7 @@ from scipy import stats
 import os.path
 import pickle
 from noise import rewire
+import operator
 
 class KCoreExperiment(object):
     """docstring for KCoreExperiment."""
@@ -106,18 +107,38 @@ class KCoreExperiment(object):
 
         Sometime returns more than n if there are ties
         """
-        values = set([nvalues[k] for k in keys])
-        topn = []
-
-        while len(topn) < n and len(values) > 0:
-            topval = max(values)
-            for k in keys:
-                if nvalues[k] == topval:
-                    topn.append(k)
-            values.remove(topval)
-
+        data = [(k, nvalues[k]) for k in keys]
+        values = sorted(data, key=operator.itemgetter(1), reverse=True)[:n]
+        topn = [x[0] for x in values]
         return topn
 
+    def resultsMean(self, data):
+        cdata = {}
+        for d in data:
+            if d[0] not in cdata:
+                cdata[d[0]] = [[] for _ in self.top]
+            for i in xrange(0, len(self.top)):
+                cdata[d[0]][i].append(d[2*i + 1])
+        mdata = []
+        for i in cdata:
+            d = [i]
+            for l in cdata[i]:
+                d += [np.mean(l), np.std(l)]
+            mdata.append(d)
+        return mdata
+
+    def saveMeanResults(self, data, iden):
+        data = self.resultsMean(data)
+        fname = self.sname + '_core_mean_' + iden + '.csv'
+        with open(fname, 'w') as f:
+            writer = csv.writer(f, delimiter=',')
+            header = ['change']
+            for p in self.top:
+                v = str(int(p*100))
+                header += ['correlation_'+v, 'std_'+v]
+            writer.writerow(header)
+            for d in data:
+                writer.writerow(d)
 
     def saveResults(self, data, iden):
         fname = self.sname + '_core_' + iden + '.csv'
@@ -155,13 +176,16 @@ class KCoreExperiment(object):
             self.saveHistogram(hdata, identifier+'_top_'+str(int(p*100)))
 
     def getHistogram(self, x2, histogram, i, p):
-        hist, sep = np.histogram(x2, bins=max(x2)-min(x2))
-        for s in sep[:-1]:
-            if s not in histogram[p][i]:
-                histogram[p][i][s] = []
+        if max(x2) > min(x2):
+            hist, sep = np.histogram(x2, bins=max(x2)-min(x2))
+            for s in sep[:-1]:
+                if s not in histogram[p][i]:
+                    histogram[p][i][s] = []
 
-        for k, v in enumerate(hist):
-            histogram[p][i][sep[k]].append(v)
+            for k, v in enumerate(hist):
+                histogram[p][i][sep[k]].append(v)
+        else:
+            histogram[p][i][x2[0]] = [len(x2)]
 
     def newHistogram(self, step, end):
         return {p: {x:{} for x in xrange(0, end, step)} for p in self.top}
@@ -179,7 +203,7 @@ class KCoreExperiment(object):
                 common_nodes = list(all_nodes.intersection([n for n in cnumber[i]]))
                 for p in self.top:
                     common_nodes = self.selectTopN(cnumber[0], common_nodes,\
-                     self.number_of_nodes * p)
+                     int(self.number_of_nodes * p))
                     x1 = [cnumber[0][n] for n in common_nodes]
                     x2 = [cnumber[i][n] for n in common_nodes]
                     tau, p_value = stats.kendalltau(x1, x2)
@@ -189,6 +213,7 @@ class KCoreExperiment(object):
                 data.append(t_data)
                 print(t_data)
 
+        self.saveMeanResults(data, 'edges_rewire_random')
         self.processHistogram(histogram, 'nodes_delete_random')
         self.saveResults(data, 'nodes_delete_random')
 
@@ -205,7 +230,7 @@ class KCoreExperiment(object):
                 common_nodes = list(all_nodes.intersection([n for n in cnumber[i]]))
                 for p in self.top:
                     common_nodes = self.selectTopN(cnumber[0], common_nodes,\
-                     self.number_of_nodes * p)
+                     int(self.number_of_nodes * p))
                     x1 = [cnumber[0][n] for n in common_nodes]
                     x2 = [cnumber[i][n] for n in common_nodes]
                     tau, p_value = stats.kendalltau(x1, x2)
@@ -215,6 +240,7 @@ class KCoreExperiment(object):
                 data.append(t_data)
                 print(t_data)
 
+        self.saveMeanResults(data, 'edges_rewire_random')
         self.processHistogram(histogram, 'edges_delete_random')
         self.saveResults(data, 'edges_delete_random')
 
@@ -231,7 +257,7 @@ class KCoreExperiment(object):
                 common_nodes = list(all_nodes.intersection([n for n in cnumber[i]]))
                 for p in self.top:
                     common_nodes = self.selectTopN(cnumber[0], common_nodes,\
-                     self.number_of_nodes * p)
+                     int(self.number_of_nodes * p))
                     x1 = [cnumber[0][n] for n in common_nodes]
                     x2 = [cnumber[i][n] for n in common_nodes]
                     tau, p_value = stats.kendalltau(x1, x2)
@@ -241,6 +267,7 @@ class KCoreExperiment(object):
                 data.append(t_data)
                 print(t_data)
 
+        self.saveMeanResults(data, 'edges_rewire_random')
         self.processHistogram(histogram, 'edges_rewire_random')
         self.saveResults(data, 'edges_rewire_random')
 

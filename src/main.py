@@ -22,7 +22,8 @@ if __name__ == '__main__':
         fname = sys.argv[2]                 # Input data file
         sname = sys.argv[3]                 # Output file
         adj = int(sys.argv[4]) > 0          # 1 if input file is adjacency list, 0 otherwise
-        ktruss_exp = ktruss.KTrussExperiment(fname, sname, adj)
+        mode = sys.argv[5]
+        ktruss_exp = ktruss.KTrussExperiment(fname, sname, adj, mode)
         tnumber = ktruss_exp.runExperiment(10, 2, 50)
 
     if identifier == 2 :

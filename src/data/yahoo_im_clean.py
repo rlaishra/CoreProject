@@ -14,7 +14,7 @@ def extractEdgelist(fname):
         reader = csv.reader(f, delimiter=' ')
         for row in reader:
             edges.append((row[2], row[4]))
-    edges = list(set(edges))
+    edges = list(map(list, set(map(frozenset, edges))))
     return edges
 
 def saveEdgelist(spath, edges, index):
@@ -34,4 +34,5 @@ if __name__ == '__main__':
 
     for i, f in enumerate(fnames):
         edges = extractEdgelist(f)
+        print(len(edges))
         saveEdgelist(spath, edges, i)

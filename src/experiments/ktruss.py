@@ -10,10 +10,11 @@ from scipy import stats
 import pickle
 import os.path
 from noise import rewire
+import operator
 
 class KTrussExperiment(object):
     """docstring for KCoreExperiment."""
-    def __init__(self, fname, sname, adjacency=False, mode = '111'):
+    def __init__(self, fname, sname, adjacency=False, mode='111'):
         super(KTrussExperiment, self).__init__()
         self.fname = fname
         self.sname = sname
@@ -104,20 +105,39 @@ class KTrussExperiment(object):
     def selectTopN(self, nvalues, keys, n):
         """
         Select the top n keys with the highest values
-
-        Sometime returns more than n if there are ties
         """
-        values = set([nvalues[k] for k in keys])
-        topn = []
-
-        while len(topn) < n and len(values) > 0:
-            topval = max(values)
-            for k in keys:
-                if nvalues[k] == topval:
-                    topn.append(k)
-            values.remove(topval)
-
+        data = [(k, nvalues[k]) for k in keys]
+        data = sorted(data, key=operator.itemgetter(1), reverse=True)[:n]
+        topn = [x[0] for x in data]
         return topn
+
+    def resultsMean(self, data):
+        cdata = {}
+        for d in data:
+            if d[0] not in cdata:
+                cdata[d[0]] = [[] for _ in self.top]
+            for i in xrange(0, len(self.top)):
+                cdata[d[0]][i].append(d[2*i + 1])
+        mdata = []
+        for i in cdata:
+            d = [i]
+            for l in cdata[i]:
+                d += [np.mean(l), np.std(l)]
+            mdata.append(d)
+        return mdata
+
+    def saveMeanResults(self, data, iden):
+        data = self.resultsMean(data)
+        fname = self.sname + '_truss_mean_' + iden + '.csv'
+        with open(fname, 'w') as f:
+            writer = csv.writer(f, delimiter=',')
+            header = ['change']
+            for p in self.top:
+                v = str(int(p*100))
+                header += ['correlation_'+v, 'std_'+v]
+            writer.writerow(header)
+            for d in data:
+                writer.writerow(d)
 
     def saveResults(self, data, iden):
         fname = self.sname + '_truss_' + iden + '.csv'
@@ -127,6 +147,7 @@ class KTrussExperiment(object):
             for p in self.top:
                 v = str(int(p*100))
                 header += ['correlation_'+v, 'pvalue_'+v]
+            writer.writerow(header)
             for d in data:
                 writer.writerow(d)
 
@@ -190,6 +211,7 @@ class KTrussExperiment(object):
                 data.append(t_data)
                 print(t_data)
 
+        self.saveMeanResults(data, 'nodes_delete_random')
         self.processHistogram(histogram, 'nodes_delete_random')
         self.saveResults(data, 'nodes_delete_random')
 
@@ -205,8 +227,8 @@ class KTrussExperiment(object):
                 t_data = [i]
                 common_edges = list(all_edges.intersection([e for e in tnumber[i]]))
                 for p in self.top:
-                    common_nodes = self.selectTopN(tnumber[0], common_edges,\
-                     self.number_of_edges * p)
+                    common_edges = self.selectTopN(tnumber[0], common_edges,\
+                     int(self.number_of_edges * p))
                     x1 = [tnumber[0][n] for n in common_edges]
                     x2 = [tnumber[i][n] for n in common_edges]
                     tau, p_value = stats.kendalltau(x1, x2)
@@ -216,6 +238,7 @@ class KTrussExperiment(object):
                 data.append(t_data)
                 print(t_data)
 
+        self.saveMeanResults(data, 'edges_delete_random')
         self.processHistogram(histogram, 'edges_delete_random')
         self.saveResults(data, 'edges_delete_random')
 
@@ -230,8 +253,8 @@ class KTrussExperiment(object):
                 t_data = [i]
                 common_edges = list(all_edges.intersection([e for e in tnumber[i]]))
                 for p in self.top:
-                    common_nodes = self.selectTopN(tnumber[0], common_edges,\
-                     self.number_of_edges * p)
+                    common_edges = self.selectTopN(tnumber[0], common_edges,\
+                     int(self.number_of_edges * p))
                     x1 = [tnumber[0][n] for n in common_edges]
                     x2 = [tnumber[i][n] for n in common_edges]
                     tau, p_value = stats.kendalltau(x1, x2)
@@ -241,6 +264,7 @@ class KTrussExperiment(object):
                 data.append(t_data)
                 print(t_data)
 
+        self.saveMeanResults(data, 'edges_delete_random')
         self.processHistogram(histogram, 'edges_delete_random')
         self.saveResults(data, 'edges_delete_random')
 
@@ -255,8 +279,8 @@ class KTrussExperiment(object):
                 t_data = [i]
                 common_edges = list(all_edges.intersection([e for e in tnumber[i]]))
                 for p in self.top:
-                    common_nodes = self.selectTopN(tnumber[0], common_edges,\
-                     self.number_of_edges * p)
+                    common_edges = self.selectTopN(tnumber[0], common_edges,\
+                     int(self.number_of_edges * p))
                     x1 = [tnumber[0][n] for n in common_edges]
                     x2 = [tnumber[i][n] for n in common_edges]
                     tau, p_value = stats.kendalltau(x1, x2)
@@ -266,6 +290,7 @@ class KTrussExperiment(object):
                 data.append(t_data)
                 print(t_data)
 
+        self.saveMeanResults(data, 'edges_rewire_random')
         self.processHistogram(histogram, 'edges_rewire_random')
         self.saveResults(data, 'edges_rewire_random')
 

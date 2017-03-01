@@ -32,8 +32,8 @@ class KTruss(object):
                     remove.append(e)
                     complete = False
             graph.remove_edges_from(remove)
-            #print('k: {} \t Edges removed: {} \t Edges left: {}'.format(k,\
-            # len(remove), graph.number_of_edges()))
+            print('k: {} \t Edges removed: {} \t Edges left: {}'.format(k,\
+             len(remove), graph.number_of_edges()))
         return graph
 
     def trussNumber(self, graph=None):
@@ -46,7 +46,6 @@ class KTruss(object):
         k = 3
 
         while graph.number_of_edges() > 0:
-            print('k',k)
             graph = self.decomposition(graph, k)
             for e in graph.edges():
                 tnumber[e] = k
