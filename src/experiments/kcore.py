@@ -11,13 +11,14 @@ import os.path
 import pickle
 from noise import rewire
 import operator
+from utils import statistics
 
 class KCoreExperiment(object):
     """docstring for KCoreExperiment."""
-    def __init__(self, fname, sname, adjacency=False, mode='111'):
+    def __init__(self, fname, sname, adjacency=False, mode='111', ftype='file', top=None):
         super(KCoreExperiment, self).__init__()
         self.fname = fname
-        self.sname = sname
+        self.sname = sname                      # If sname is none retults are turned not saved
         self.adj = adjacency
         """
         1st digit for random node deletion,
@@ -25,17 +26,27 @@ class KCoreExperiment(object):
         3rd digit for random rewiring preserving degree dist
         """
         self.mode = mode
-        if not self.adj:
-            self.graph = nx.read_edgelist(self.fname)
+        if ftype == 'file':                             # ftype can be file on graph. if graph fname is a networkx graph object
+            if not self.adj:
+                self.graph = nx.read_edgelist(self.fname)
+            else:
+                self.graph = nx.read_adjlist(self.fname)
+            self.ori_graph = None
         else:
-            self.graph = nx.read_adjlist(self.fname)
+            self.graph = fname.copy()
+            self.ori_graph = fname.copy()
         self.kcore = kcore.KCore(self.graph)
         self.number_of_nodes = self.graph.number_of_nodes()
         self.number_of_edges = self.graph.number_of_edges()
-        self.top = [1, 0.2, 0.1, 0.05]                  # Percentage of top nodes consider
-
+        if top is None:
+            self.top = [1, 0.2, 0.1, 0.05]                  # Percentage of top nodes consider
+        else:
+            self.top = top
+        self.stats = statistics.Statistics()
 
     def readCache(self):
+        if self.sname is None:
+            return None
         fname = self.sname + '_core_pickle.pickle'
         if os.path.isfile(fname):
             with open(fname, 'r') as f:
@@ -46,16 +57,20 @@ class KCoreExperiment(object):
         return None
 
     def writeCache(self, cnumber):
+        if self.sname is None:
+            return None
         fname = self.sname + '_core_pickle.pickle'
         f = open(fname, 'w')
         data = {'graph': self.graph.copy(), 'cnumber': cnumber}
         pickle.dump(data, f)
 
     def readData(self):
-        if not self.adj:
-            self.graph = nx.read_edgelist(self.fname)
-        else:
-            self.graph = nx.read_adjlist(self.fname)
+        if self.ori_graph is None:
+            if not self.adj:
+                self.ori_graph = nx.read_edgelist(self.fname)
+            else:
+                self.ori_graph = nx.read_adjlist(self.fname)
+        self.graph = self.ori_graph.copy()
 
     def coreNumber(self, can_cache=False):
         if can_cache:
@@ -104,8 +119,6 @@ class KCoreExperiment(object):
     def selectTopN(self, nvalues, keys, n):
         """
         Select the top n keys with the highest values
-
-        Sometime returns more than n if there are ties
         """
         data = [(k, nvalues[k]) for k in keys]
         values = sorted(data, key=operator.itemgetter(1), reverse=True)[:n]
@@ -202,47 +215,77 @@ class KCoreExperiment(object):
                 t_data = [i]
                 common_nodes = list(all_nodes.intersection([n for n in cnumber[i]]))
                 for p in self.top:
-                    common_nodes = self.selectTopN(cnumber[0], common_nodes,\
+                    common_nodes = self.selectTopN(cnumber[i], common_nodes,\
                      int(self.number_of_nodes * p))
                     x1 = [cnumber[0][n] for n in common_nodes]
                     x2 = [cnumber[i][n] for n in common_nodes]
                     tau, p_value = stats.kendalltau(x1, x2)
+                    #tau = self.stats.kendalltau(x1,x2)
+                    #p_value = 0
                     t_data += [tau, p_value]
                     self.getHistogram(x2, histogram, i, p)
 
                 data.append(t_data)
                 print(t_data)
+            # Least square error
+            ls_x = []
+            ls_y = []
+            for r in data[-1]:
+                ls_x.append(r[0])
+                ls_y.append(r[1])
+            v = np.polyfit(ls_x, ls_y, 1)
+            print(v[1][0])
 
-        self.saveMeanResults(data, 'edges_rewire_random')
+        self.saveMeanResults(data, 'nodes_delete_random')
         self.processHistogram(histogram, 'nodes_delete_random')
         self.saveResults(data, 'nodes_delete_random')
 
     def expRandomMissingEdges(self, iter, step, end):
         data = []
         histogram = self.newHistogram(step, end)
+        ls = []
 
         for _ in xrange(0,iter):
             self.readData()
             cnumber = self.runExperimentEdges(step, end, mode=0)
             all_nodes = set([n for n in cnumber[0]])
+            edata = []
             for i in cnumber:
                 t_data = [i]
                 common_nodes = list(all_nodes.intersection([n for n in cnumber[i]]))
                 for p in self.top:
-                    common_nodes = self.selectTopN(cnumber[0], common_nodes,\
+                    common_nodes = self.selectTopN(cnumber[i], common_nodes,\
                      int(self.number_of_nodes * p))
                     x1 = [cnumber[0][n] for n in common_nodes]
                     x2 = [cnumber[i][n] for n in common_nodes]
                     tau, p_value = stats.kendalltau(x1, x2)
+                    #tau = self.stats.kendalltau(x1, x2)
+                    #p_value = 0
                     t_data += [tau, p_value]
                     self.getHistogram(x2, histogram, i, p)
-
+                    edata.append(t_data)
                 data.append(t_data)
                 print(t_data)
-
-        self.saveMeanResults(data, 'edges_rewire_random')
-        self.processHistogram(histogram, 'edges_delete_random')
-        self.saveResults(data, 'edges_delete_random')
+            # Least square error
+            ls_x = []
+            ls_y = [[] for _ in self.top]
+            for r in edata:
+                ls_x.append(r[0])
+                for i,_ in enumerate(self.top):
+                    ls_y[i].append(r[i*2+1])
+            ls = [[] for _ in self.top]
+            for i,_ in enumerate(ls_y):
+                v = np.polyfit(ls_x, ls_y[i], 1, full=True)
+                ls[i].append(v[1][0])
+        errors = [[np.mean([i for i in l if not np.isnan(i)]),\
+         np.std([i for i in l if not np.isnan(i)])] for l in ls]
+        if self.sname is not None:
+            self.saveMeanResults(data, 'edges_delete_random')
+            self.processHistogram(histogram, 'edges_delete_random')
+            self.saveResults(data, 'edges_delete_random')
+        else:
+            print(errors)
+            return data, histogram, data, errors
 
     def expRandomRewireEdges(self, iter, step, end):
         data = []
@@ -256,11 +299,13 @@ class KCoreExperiment(object):
                 t_data = [i]
                 common_nodes = list(all_nodes.intersection([n for n in cnumber[i]]))
                 for p in self.top:
-                    common_nodes = self.selectTopN(cnumber[0], common_nodes,\
+                    common_nodes = self.selectTopN(cnumber[i], common_nodes,\
                      int(self.number_of_nodes * p))
                     x1 = [cnumber[0][n] for n in common_nodes]
                     x2 = [cnumber[i][n] for n in common_nodes]
                     tau, p_value = stats.kendalltau(x1, x2)
+                    #tau = self.stats.kendalltau(x1, x2)
+                    #p_value = 0
                     t_data += [tau, p_value]
                     self.getHistogram(x2, histogram, i, p)
 

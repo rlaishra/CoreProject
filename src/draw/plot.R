@@ -53,11 +53,21 @@ drawKendallCorrelation <- function(fname, t, d) {
     pl <- pl + geom_jitter(aes(y = correlation_20, color='Top 20%'))
     pl <- pl + geom_jitter(aes(y = correlation_10, color='Top 10%'))
     pl <- pl + geom_jitter(aes(y = correlation_5, color='Top 5%'))
-  } else if (d == 'l') {
+  } else if (d == 's') {
     pl <- pl + geom_smooth(aes(y = correlation_100, color='All'), alpha=0)
     #pl <- pl + geom_smooth(aes(y = correlation_20, color='Top 20%'), alpha=0)
     pl <- pl + geom_smooth(aes(y = correlation_10, color='Top 10%'), alpha=0)
     pl <- pl + geom_smooth(aes(y = correlation_5, color='Top 5%'), alpha=0)
+  } else if (d == 'p') {
+    pl <- pl + geom_point(aes(y = correlation_100, color='All'))
+    pl <- pl + geom_point(aes(y = correlation_20, color='Top 20%'))
+    pl <- pl + geom_point(aes(y = correlation_10, color='Top 10%'))
+    pl <- pl + geom_point(aes(y = correlation_5, color='Top 5%'))
+  } else if (d == 'l') {
+    pl <- pl + geom_line(aes(y = correlation_100, color='All'))
+    pl <- pl + geom_line(aes(y = correlation_20, color='Top 20%'))
+    pl <- pl + geom_line(aes(y = correlation_10, color='Top 10%'))
+    pl <- pl + geom_line(aes(y = correlation_5, color='Top 5%'))
   }
   
   if(t == 'n'){
@@ -66,12 +76,14 @@ drawKendallCorrelation <- function(fname, t, d) {
     pl <- pl + labs(x='Missing Edges (%)', y='Kendal Tau Correlation')
   } else if (t == 'r') {
     pl <- pl + labs(x='Edges Rewired (%)', y='Kendal Tau Correlation')
+  } else if (t == 'd') {
+    pl <- pl + labs(x='Days', y='Kendal Tau Correlation')
   }
   
   return(pl)
 }
 
-drawMeanKendallCorrelation <- function(fname, t, d) {
+drawMeanKendallCorrelation <- function(fname, t) {
   data <- read.csv(file = fname, sep = ',')
   pl <- ggplot(data = data, aes(x=change))
   
@@ -115,33 +127,63 @@ drawDegreeDist <- function(fname) {
 drawCoreNumberHistogram <- function(fname) {
   data <- read.csv(file = fname, sep = ',')
   pl <- ggplot(data = data, aes(x=core_number))
-  pl <- pl + geom_line(aes(y = missing_0, color='Removed 0'))
-  pl <- pl + geom_line(aes(y = missing_2, color='Removed 2'))
-  pl <- pl + geom_line(aes(y = missing_4, color='Removed 4'))
-  pl <- pl + geom_line(aes(y = missing_6, color='Removed 6'))
-  pl <- pl + geom_line(aes(y = missing_8, color='Removed 8'))
-  pl <- pl + geom_line(aes(y = missing_10, color='Removed 10'))
-  pl <- pl + geom_line(aes(y = missing_12, color='Removed 12'))
-  pl <- pl + geom_line(aes(y = missing_14, color='Removed 14'))
-  pl <- pl + geom_line(aes(y = missing_16, color='Removed 16'))
-  pl <- pl + geom_line(aes(y = missing_18, color='Removed 18'))
-  pl <- pl + geom_line(aes(y = missing_20, color='Removed 20'))
-  pl <- pl + geom_line(aes(y = missing_22, color='Removed 22'))
-  pl <- pl + geom_line(aes(y = missing_24, color='Removed 24'))
-  pl <- pl + geom_line(aes(y = missing_26, color='Removed 26'))
-  pl <- pl + geom_line(aes(y = missing_28, color='Removed 28'))
-  pl <- pl + geom_line(aes(y = missing_30, color='Removed 30'))
-  pl <- pl + geom_line(aes(y = missing_32, color='Removed 32'))
-  pl <- pl + geom_line(aes(y = missing_34, color='Removed 34'))
-  pl <- pl + geom_line(aes(y = missing_36, color='Removed 36'))
-  pl <- pl + geom_line(aes(y = missing_38, color='Removed 38'))
-  pl <- pl + geom_line(aes(y = missing_40, color='Removed 40'))
-  pl <- pl + geom_line(aes(y = missing_42, color='Removed 42'))
-  pl <- pl + geom_line(aes(y = missing_44, color='Removed 44'))
-  pl <- pl + geom_line(aes(y = missing_46, color='Removed 46'))
-  pl <- pl + geom_line(aes(y = missing_48, color='Removed 48'))
+  pl <- pl + geom_line(aes(y = change_0, color='Removed 0'))
+  pl <- pl + geom_line(aes(y = change_2, color='Removed 2'))
+  pl <- pl + geom_line(aes(y = change_4, color='Removed 4'))
+  pl <- pl + geom_line(aes(y = change_6, color='Removed 6'))
+  pl <- pl + geom_line(aes(y = change_8, color='Removed 8'))
+  pl <- pl + geom_line(aes(y = change_10, color='Removed 10'))
+  pl <- pl + geom_line(aes(y = change_12, color='Removed 12'))
+  pl <- pl + geom_line(aes(y = change_14, color='Removed 14'))
+  pl <- pl + geom_line(aes(y = change_16, color='Removed 16'))
+  pl <- pl + geom_line(aes(y = change_18, color='Removed 18'))
+  pl <- pl + geom_line(aes(y = change_20, color='Removed 20'))
+  pl <- pl + geom_line(aes(y = change_22, color='Removed 22'))
+  pl <- pl + geom_line(aes(y = change_24, color='Removed 24'))
+  pl <- pl + geom_line(aes(y = change_26, color='Removed 26'))
+  pl <- pl + geom_line(aes(y = change_28, color='Removed 28'))
+  pl <- pl + geom_line(aes(y = change_30, color='Removed 30'))
+  pl <- pl + geom_line(aes(y = change_32, color='Removed 32'))
+  pl <- pl + geom_line(aes(y = change_34, color='Removed 34'))
+  pl <- pl + geom_line(aes(y = change_36, color='Removed 36'))
+  pl <- pl + geom_line(aes(y = change_38, color='Removed 38'))
+  pl <- pl + geom_line(aes(y = change_40, color='Removed 40'))
+  pl <- pl + geom_line(aes(y = change_42, color='Removed 42'))
+  pl <- pl + geom_line(aes(y = change_44, color='Removed 44'))
+  pl <- pl + geom_line(aes(y = change_46, color='Removed 46'))
+  pl <- pl + geom_line(aes(y = change_48, color='Removed 48'))
   
   pl <- pl + labs(x='Core Number', y='Number of nodes')
   
   return(pl)
+}
+
+drawCoreTriangle <- function(fname) {
+  data <- read.csv(file = fname, sep = ' ')
+  
+  pl <- ggplot(data = data, aes(x=core))
+  pl <- pl + geom_point(aes(y=triangles))
+  pl <- pl + geom_density2d(aes(y=triangles))
+  
+  pl <- pl + labs(x='Core Number', y='4-Cliques Count')
+  
+  return(pl)
+}
+
+drawHistogram <- function(fname){
+  data <- read.csv(file = fname, sep = '\t')
+  
+  pl <- ggplot(data=data, aes(x=core))
+  pl <- pl + geom_line(aes(y=count))
+  pl <- pl + labs(x='Core Number', y='Count')
+  
+  return(pl)
+}
+
+drawError <- function(fname,k) {
+  data <- read.csv(fname, header=TRUE, sep=',')
+  p <- ggplot()
+  p <- p + geom_point(data=data[which(data$core==k),], aes(x=components, y=error_0.2))
+  #p <- p + geom_line(data=data[which(data$core==k),], aes(x=components, y=error_1))
+  return(p)
 }

@@ -21,9 +21,11 @@ class KTruss(object):
             remove = []
             # Nodes with degree less than k-2 cannot have edges in k-truss
             degree = graph.degree()
+            node_remove = []
             for n in degree:
                 if degree[n] < k - 2:
-                    graph.remove_node(n)
+                    node_remove.append(n)
+            graph.remove_nodes_from(node_remove)
 
             # Truss number of remaining
             for e in graph.edges():

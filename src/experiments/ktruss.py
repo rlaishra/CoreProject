@@ -33,6 +33,7 @@ class KTrussExperiment(object):
         self.number_of_nodes = self.graph.number_of_nodes()
         self.number_of_edges = self.graph.number_of_edges()
         self.top = [1, 0.2, 0.1, 0.05]                  # Percentage of top nodes consider
+        self.ori_graph = None
 
     def readCache(self):
         fname = self.sname + '_truss_pickle.pickle'
@@ -52,10 +53,12 @@ class KTrussExperiment(object):
 
 
     def readData(self):
-        if not self.adj:
-            self.graph = nx.read_edgelist(self.fname)
-        else:
-            self.graph = nx.read_adjlist(self.fname)
+        if self.ori_graph is None:
+            if not self.adj:
+                self.ori_graph = nx.read_edgelist(self.fname)
+            else:
+                self.ori_graph = nx.read_adjlist(self.fname)
+        self.graph = self.ori_graph.copy()
 
     def trussNumber(self, can_cache=False):
         if can_cache:
@@ -122,7 +125,8 @@ class KTrussExperiment(object):
         for i in cdata:
             d = [i]
             for l in cdata[i]:
-                d += [np.mean(l), np.std(l)]
+                dat = [i for i in l if not np.isnan(i)]
+                d += [np.mean(dat), np.std(dat)]
             mdata.append(d)
         return mdata
 
@@ -175,6 +179,8 @@ class KTrussExperiment(object):
             self.saveHistogram(hdata, identifier+'_top_'+str(int(p*100)))
 
     def getHistogram(self, x2, histogram, i, p):
+        if len(x2) == 0:
+            return None
         if max(x2) > min(x2):
             hist, sep = np.histogram(x2, bins=max(x2)-min(x2))
             for s in sep[:-1]:
@@ -200,10 +206,10 @@ class KTrussExperiment(object):
                 t_data = [i]
                 common_edges = list(all_edges.intersection([e for e in tnumber[i]]))
                 for p in self.top:
-                    common_nodes = self.selectTopN(tnumber[0], common_edges,\
-                     self.number_of_edges * p)
-                    x1 = [tnumber[0][n] for n in common_edges]
-                    x2 = [tnumber[i][n] for n in common_edges]
+                    edges = self.selectTopN(tnumber[i], common_edges,\
+                     int(len(tnumber[i]) * p))
+                    x1 = [tnumber[0][n] for n in edges]
+                    x2 = [tnumber[i][n] for n in edges]
                     tau, p_value = stats.kendalltau(x1, x2)
                     t_data += [tau, p_value]
                     self.getHistogram(x2, histogram, i, p)
@@ -227,10 +233,10 @@ class KTrussExperiment(object):
                 t_data = [i]
                 common_edges = list(all_edges.intersection([e for e in tnumber[i]]))
                 for p in self.top:
-                    common_edges = self.selectTopN(tnumber[0], common_edges,\
-                     int(self.number_of_edges * p))
-                    x1 = [tnumber[0][n] for n in common_edges]
-                    x2 = [tnumber[i][n] for n in common_edges]
+                    edges = self.selectTopN(tnumber[i], common_edges,\
+                     int(len(tnumber[i]) * p))
+                    x1 = [tnumber[0][n] for n in edges]
+                    x2 = [tnumber[i][n] for n in edges]
                     tau, p_value = stats.kendalltau(x1, x2)
                     t_data += [tau, p_value]
                     self.getHistogram(x2, histogram, i, p)
@@ -253,10 +259,10 @@ class KTrussExperiment(object):
                 t_data = [i]
                 common_edges = list(all_edges.intersection([e for e in tnumber[i]]))
                 for p in self.top:
-                    common_edges = self.selectTopN(tnumber[0], common_edges,\
-                     int(self.number_of_edges * p))
-                    x1 = [tnumber[0][n] for n in common_edges]
-                    x2 = [tnumber[i][n] for n in common_edges]
+                    edges = self.selectTopN(tnumber[i], common_edges,\
+                     int(len(tnumber[i]) * p))
+                    x1 = [tnumber[0][n] for n in edges]
+                    x2 = [tnumber[i][n] for n in edges]
                     tau, p_value = stats.kendalltau(x1, x2)
                     t_data += [tau, p_value]
                     self.getHistogram(x2, histogram, i, p)

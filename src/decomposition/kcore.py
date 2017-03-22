@@ -4,9 +4,10 @@ import sys
 
 class KCore(object):
     """K-core decomposition"""
-    def __init__(self, graph):
+    def __init__(self, graph, verbose=False):
         super(KCore, self).__init__()
         self.graph = graph.copy()
+        self.verbose = verbose
 
     def decomposition(self, graph=None, k = 2):
         """
@@ -21,8 +22,9 @@ class KCore(object):
             remove = [n for n in degree if degree[n] < k]
             complete = len(remove) < 1
             graph.remove_nodes_from(remove)
-            print('k: {} \t Nodes removed: {} \t Nodes left: {}'.format(k,\
-             len(remove), graph.number_of_nodes()))
+            if self.verbose:
+                print('k: {} \t Nodes removed: {} \t Nodes left: {}'.format(k,\
+                len(remove), graph.number_of_nodes()))
         return graph
 
     def coreNumber(self, graph=None):
