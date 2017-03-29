@@ -1,6 +1,7 @@
 from __future__ import division, print_function
 import numpy as np
 import networkx as nx
+import sys
 
 class Statistics(object):
     """docstring for Statistics."""
@@ -38,10 +39,24 @@ class Statistics(object):
         cor = s/(n*(n-1)*0.5)
         return cor
 
+    def monotonic(self, x):
+        change = 0
+        count = 0
+        for i in xrange(1, len(x)-1):
+            u = x[i-1]
+            v = x[i]
+            w = x[i+1]
+            if (u > v and v < w) or (u < v and v > w):
+                m = (u + w)/2
+                c = np.abs(m - v)
+                change += c
+                count += 1
+        return change/count if count > 0 else 0
+
 if __name__ == '__main__':
     stats = Statistics()
     l1 = [i for i in xrange(0,100)] + [20000]*100
-    l2 = [i for i in xrange(0,100,)] + [10000]*50 + [30000]*50
+    l2 = [i for i in xrange(0,10)] + [3,5,9,0,10]
 
-    cor = stats.kendallTau(l1,l2)
-    print(cor)
+    change = stats.monotonic(l2)
+    print(change)
