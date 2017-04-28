@@ -1,3 +1,6 @@
 venv/*
+db/*
 
 *.pyc
+outputs/*
+data/*

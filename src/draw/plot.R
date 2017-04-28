@@ -90,12 +90,12 @@ drawMeanKendallCorrelation <- function(fname, t) {
   pl <- pl + geom_line(aes(y = correlation_100, color='All'))
   pl <- pl + geom_line(aes(y = correlation_20, color='Top 20%'))
   pl <- pl + geom_line(aes(y = correlation_10, color='Top 10%'))
-  pl <- pl + geom_line(aes(y = correlation_5, color='Top 5%'))
+  #pl <- pl + geom_line(aes(y = correlation_5, color='Top 5%'))
   
   pl <- pl + geom_ribbon(aes(ymin=correlation_100-std_100, ymax=correlation_100+std_100, fill='All'), alpha=0.2)
   pl <- pl + geom_ribbon(aes(ymin=correlation_20-std_20, ymax=correlation_20+std_20, fill='Top 20%'), alpha=0.2)
   pl <- pl + geom_ribbon(aes(ymin=correlation_10-std_10, ymax=correlation_10+std_10, fill='Top 10%'), alpha=0.2)
-  pl <- pl + geom_ribbon(aes(ymin=correlation_5-std_5, ymax=correlation_5+std_5, fill='Top 5%'), alpha=0.2)
+  #pl <- pl + geom_ribbon(aes(ymin=correlation_5-std_5, ymax=correlation_5+std_5, fill='Top 5%'), alpha=0.2)
   
   if(t == 'n'){
     pl <- pl + labs(x='Missing Nodes (%)', y='Kendal Tau Correlation')

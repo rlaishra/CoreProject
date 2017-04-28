@@ -41,7 +41,12 @@ class Statistics(object):
 
     def monotonic(self, x):
         change = 0
-        count = 0
+
+        # Normalize
+        x_min = min(x)
+        x_max = max(x) - x_min
+        x = [(v - x_min)/x_max for v in x]
+
         for i in xrange(1, len(x)-1):
             u = x[i-1]
             v = x[i]
@@ -49,9 +54,24 @@ class Statistics(object):
             if (u > v and v < w) or (u < v and v > w):
                 m = (u + w)/2
                 c = np.abs(m - v)
-                change += c
+                change += c*c
+        return change/len(x)
+
+    def increasing(self, x):
+        change = 0
+        count = 0
+        # Normalize
+        #x_min = min(x)
+        #x_max = max(x) - x_min
+        #x = [(v - x_min)/x_max for v in x]
+
+        for i in xrange(1, len(x)):
+            u = x[i-1]
+            v = x[i]
+            if u < v:
+                change += (v - u)
                 count += 1
-        return change/count if count > 0 else 0
+        return change
 
 if __name__ == '__main__':
     stats = Statistics()

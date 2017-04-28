@@ -37,9 +37,11 @@ def caluclateMonotonic(data):
     stats = statistics.Statistics()
 
     for d in data:
-        u = np.polyfit(data['change'], data[d] ,deg=3, full=True)
+        u = np.polyfit(data['change'], data[d] ,deg=1, full=True)
         v = stats.monotonic(data[d])
-        pprint((d, v, u[1][0]))
+        w = np.polyfit(data['change'], data[d] ,deg=2, full=True)
+        x = stats.increasing(data[d])
+        pprint((d, v, x, u[1][0], w[1][0]))
 
 if __name__ == '__main__':
     fname = sys.argv[1]
