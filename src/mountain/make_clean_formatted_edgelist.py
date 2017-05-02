@@ -1,9 +1,11 @@
+from __future__ import division
 import networkx as nx
 import graphCleanup as gcl
 import scipy.io
 import numpy as np
 import sys
 import matplotlib.pyplot as plt
+import operator
 
 def removeSelfLoops(G):
     nodes_with_selfloops = G.nodes_with_selfloops()
@@ -65,6 +67,85 @@ def plot_mountains(node_CNdrops_mountainassignment_passed, orig_core_nums, peak_
         sortedbyCOREnumber_tuples = sorted(sortedbypeaknumber_tuples, key=lambda xyv: xyv[1], reverse=True)
         node_ordering_permountain[id] = [x for x, y, z in sortedbyCOREnumber_tuples]
 
+    sizes = [len(node_ordering_permountain[x]) for x in node_ordering_permountain]
+    total = sum(sizes)
+    #print(sizes)
+    print('base',sizes[0]/total)
+
+    cnodes = [node_ordering_permountain[x] for x in node_ordering_permountain]
+    core = [orig_core_nums[n] for n in cnodes[0]]
+    mcore = max(core)
+    #print('',len(core))
+    print('top',len([c for c in core if c == mcore])/total)
+
+    #top = [c for c in core if c == mcore]
+    others = [c for c in core if c < mcore]
+    print(10, np.percentile(others, 10)/mcore)
+    print(20, np.percentile(others, 20)/mcore)
+    print(50, np.percentile(others, 50)/mcore)
+
+    c_nodes = sorted(orig_core_nums.items(), key=operator.itemgetter(1), reverse=True)
+    #print(c_nodes[0],c_nodes[-1])
+
+    s = [0,0,0]
+    th_50 = int(len(c_nodes)*0.5)
+    th_75 = int(len(c_nodes)*0.75)
+    th_90 = int(len(c_nodes)*0.9)
+
+    mountain_size = {}
+    for n in node_to_plotmountain.values():
+        if n not in mountain_size:
+            mountain_size[n] = 0
+        mountain_size[n] += 1
+
+
+
+    for i,_ in enumerate(c_nodes):
+        if i < th_50:
+            p = node_to_plotmountain[c_nodes[i][0]]
+            if mountain_size[p]/total <= 0.01:
+                s[0] += 1
+                s[1] += 1
+                s[2] += 1
+        elif i < th_75:
+            p = node_to_plotmountain[c_nodes[i][0]]
+            if mountain_size[p]/total <= 0.01:
+                s[1] += 1
+                s[2] += 1
+        elif i < th_90:
+            p = node_to_plotmountain[c_nodes[i][0]]
+            if mountain_size[p]/total <= 0.01:
+                s[2] += 1
+        else:
+            break
+
+    print('thin 50', s[0]/th_50)
+    print('thin 75', s[1]/th_75)
+    print('thin 90', s[2]/th_90)
+
+    """
+    while s < total*0.9:
+        s += sizes[i]
+        i += 1
+
+    print('thin 90', sum([1 for c in cnodes[:i] if len(c)/total <= 0.01])/i)
+
+    s = 0
+    i = 0
+    while s < total*0.75:
+        s += sizes[i]
+        i += 1
+
+    print('thin 75', sum([1 for c in cnodes[:i] if len(c)/total <= 0.01])/i)
+
+    s = 0
+    i = 0
+    while s < total*0.5:
+        s += sizes[i]
+        i += 1
+
+    print('thin 50', sum([1 for c in cnodes[:i] if len(c)/total <= 0.01])/i)
+    """
     ### Part 3 ####
     #Creating a list 'fullnodeordering' of nodeIDs ordered in the way to be plotted
     fullnodeordering = []

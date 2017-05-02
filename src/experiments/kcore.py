@@ -39,7 +39,7 @@ class KCoreExperiment(object):
         self.number_of_nodes = self.graph.number_of_nodes()
         self.number_of_edges = self.graph.number_of_edges()
         if top is None:
-            self.top = [1, 0.2, 0.1]                  # Percentage of top nodes consider
+            self.top = [1, 0.5, 0.2, 0.1]                  # Percentage of top nodes consider
         else:
             self.top = top
         self.stats = statistics.Statistics()
@@ -99,7 +99,8 @@ class KCoreExperiment(object):
             0   random edge delete
             1   random edge rewiring
         """
-        cnumber = {0:self.coreNumber(can_cache=True)}
+        #cnumber = {0:self.coreNumber(can_cache=True)}
+        cnumber = {0:nx.core_number(self.graph)}
         size = int(self.graph.number_of_edges()*step*0.01)
 
         if mode == 0:
@@ -112,7 +113,8 @@ class KCoreExperiment(object):
                 self.graph = noise.removeRandomEdges(self.graph, size)
             elif mode == 1:
                 self.graph = noise.rewire(self.graph, size)
-            cnumber[i*step] = self.coreNumber()
+            #cnumber[i*step] = self.coreNumber()
+            cnumber[i*step] = nx.core_number(self.graph)
 
         return cnumber
 
@@ -262,7 +264,7 @@ class KCoreExperiment(object):
                     #tau, p_value = stats.spearmanr(x1, x2)
                     #tau = self.stats.kendalltau(x1, x2)
                     #p_value = 0
-                    tau = 1 if np.isnan(tau) else tau
+                    #tau = 1 if np.isnan(tau) else tau
                     t_data += [tau, p_value]
                     self.getHistogram(x2, histogram, i, p)
                     edata.append(t_data)
@@ -320,11 +322,11 @@ class KCoreExperiment(object):
 
     def runExperiment(self, iter=10, step = 5, end = 50):
         if self.mode[0] is '1':
-            print('Sampling: \t Random node sampling')
+            print('Noise: \t Random node deletion')
             self.expRandomMissingNodes(iter, step, end)
 
         if self.mode[1] is '1':
-            print('Sampling: \t Random edge deletion')
+            print('Noise: \t Random edge deletion')
             self.expRandomMissingEdges(iter, step, end)
 
         if self.mode[2] is '1':
