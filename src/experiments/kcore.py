@@ -264,7 +264,7 @@ class KCoreExperiment(object):
                     #tau, p_value = stats.spearmanr(x1, x2)
                     #tau = self.stats.kendalltau(x1, x2)
                     #p_value = 0
-                    #tau = 1 if np.isnan(tau) else tau
+                    tau = 1 if np.isnan(tau) else tau
                     t_data += [tau, p_value]
                     self.getHistogram(x2, histogram, i, p)
                     edata.append(t_data)

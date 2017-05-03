@@ -80,17 +80,15 @@ def plot_mountains(node_CNdrops_mountainassignment_passed, orig_core_nums, peak_
 
     #top = [c for c in core if c == mcore]
     others = [c for c in core if c < mcore]
-    print(10, np.percentile(others, 10)/mcore)
-    print(20, np.percentile(others, 20)/mcore)
-    print(50, np.percentile(others, 50)/mcore)
+    print('\nStep')
+    for i in xrange(10, 101, 10):
+        print(i, np.percentile(others, i)/mcore)
 
     c_nodes = sorted(orig_core_nums.items(), key=operator.itemgetter(1), reverse=True)
     #print(c_nodes[0],c_nodes[-1])
 
-    s = [0,0,0]
-    th_50 = int(len(c_nodes)*0.5)
-    th_75 = int(len(c_nodes)*0.75)
-    th_90 = int(len(c_nodes)*0.9)
+    s = [0]*10
+    th = [int(len(c_nodes)*i/10) for i in xrange(1,11)]
 
     mountain_size = {}
     for n in node_to_plotmountain.values():
@@ -98,54 +96,17 @@ def plot_mountains(node_CNdrops_mountainassignment_passed, orig_core_nums, peak_
             mountain_size[n] = 0
         mountain_size[n] += 1
 
-
-
     for i,_ in enumerate(c_nodes):
-        if i < th_50:
-            p = node_to_plotmountain[c_nodes[i][0]]
-            if mountain_size[p]/total <= 0.01:
-                s[0] += 1
-                s[1] += 1
-                s[2] += 1
-        elif i < th_75:
-            p = node_to_plotmountain[c_nodes[i][0]]
-            if mountain_size[p]/total <= 0.01:
-                s[1] += 1
-                s[2] += 1
-        elif i < th_90:
-            p = node_to_plotmountain[c_nodes[i][0]]
-            if mountain_size[p]/total <= 0.01:
-                s[2] += 1
-        else:
-            break
+        for j,_ in enumerate(th):
+            if i < th[j]:
+                p = node_to_plotmountain[c_nodes[i][0]]
+                if mountain_size[p]/total <= 0.01:
+                    s[j] += 1
+    print('\nThin')
+    for i in xrange(0, len(s)):
+        print(i+1, s[i]/th[i])
 
-    print('thin 50', s[0]/th_50)
-    print('thin 75', s[1]/th_75)
-    print('thin 90', s[2]/th_90)
 
-    """
-    while s < total*0.9:
-        s += sizes[i]
-        i += 1
-
-    print('thin 90', sum([1 for c in cnodes[:i] if len(c)/total <= 0.01])/i)
-
-    s = 0
-    i = 0
-    while s < total*0.75:
-        s += sizes[i]
-        i += 1
-
-    print('thin 75', sum([1 for c in cnodes[:i] if len(c)/total <= 0.01])/i)
-
-    s = 0
-    i = 0
-    while s < total*0.5:
-        s += sizes[i]
-        i += 1
-
-    print('thin 50', sum([1 for c in cnodes[:i] if len(c)/total <= 0.01])/i)
-    """
     ### Part 3 ####
     #Creating a list 'fullnodeordering' of nodeIDs ordered in the way to be plotted
     fullnodeordering = []
