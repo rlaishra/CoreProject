@@ -87,14 +87,17 @@ drawMeanKendallCorrelation <- function(fname, t) {
   data <- read.csv(file = fname, sep = ',')
   pl <- ggplot(data = data, aes(x=change))
   
-  pl <- pl + geom_line(aes(y = correlation_100, color='All'))
-  pl <- pl + geom_line(aes(y = correlation_20, color='Top 20%'))
-  pl <- pl + geom_line(aes(y = correlation_10, color='Top 10%'))
+  #pl <- pl + geom_line(aes(y = correlation_kt_100, color='All'))
+  #pl <- pl + geom_line(aes(y = correlation_kt_80, color='Top 80%'))
+  pl <- pl + geom_line(aes(y = correlation_kt_60, color='Top 60%'))
+  pl <- pl + geom_line(aes(y = correlation_kt_40, color='Top 40%'))
+ # pl <- pl + geom_line(aes(y = correlation_kt_20, color='Top 20%'))
   #pl <- pl + geom_line(aes(y = correlation_5, color='Top 5%'))
   
-  pl <- pl + geom_ribbon(aes(ymin=correlation_100-std_100, ymax=correlation_100+std_100, fill='All'), alpha=0.2)
-  pl <- pl + geom_ribbon(aes(ymin=correlation_20-std_20, ymax=correlation_20+std_20, fill='Top 20%'), alpha=0.2)
-  pl <- pl + geom_ribbon(aes(ymin=correlation_10-std_10, ymax=correlation_10+std_10, fill='Top 10%'), alpha=0.2)
+ # pl <- pl + geom_ribbon(aes(ymin=correlation_kt_100 - std_kt_100, ymax=correlation_kt_100 + std_kt_100, fill='All'), alpha=0.2)
+  pl <- pl + geom_ribbon(aes(ymin=correlation_kt_60 - std_kt_60, ymax=correlation_kt_60 + std_kt_60, fill='Top 60%'), alpha=0.2)
+  pl <- pl + geom_ribbon(aes(ymin=correlation_kt_40 - std_kt_40, ymax=correlation_kt_40 + std_kt_40, fill='Top 40%'), alpha=0.2)
+ # pl <- pl + geom_ribbon(aes(ymin=correlation_kt_10 - std_kt_10, ymax=correlation_kt_10 + std_kt_10, fill='Top 10%'), alpha=0.2)
   #pl <- pl + geom_ribbon(aes(ymin=correlation_5-std_5, ymax=correlation_5+std_5, fill='Top 5%'), alpha=0.2)
   
   if(t == 'n'){

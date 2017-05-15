@@ -46,6 +46,7 @@ class Statistics(object):
         print(slope)
         change = 0
 
+        slope = -1
         # Normalize
         if min(x) == max(x):
             return -1
@@ -57,12 +58,21 @@ class Statistics(object):
             u = x[i-1]
             v = x[i]
 
+            """
             if slope*(v-u) < 0 and u != 0:
-                #print(u,v)
                 c = np.abs((u-v)/u)
+                #c = (u-v)/u
                 change += c*c
+            """
 
+            c = (v - u) + 1
+
+            if v > u:
+                change += c * c
+            #else:
+            #    change += c
         return change/len(x)
+
 
     def increasing(self, x):
         change = 0
@@ -113,14 +123,16 @@ if __name__ == '__main__':
         for r in reader:
             cdata.append(r)
 
-    data = [[],[],[]]
+    data = [[],[],[],[]]
     for d in cdata[1:]:
         data[0].append(float(d[1]))
         data[1].append(float(d[3]))
         data[2].append(float(d[5]))
+        data[3].append(float(d[7]))
 
     change1 = stats.monotonic(data[0])
     change2 = stats.monotonic(data[1])
     change3 = stats.monotonic(data[2])
+    change4 = stats.monotonic(data[3])
 
-    print(change1, change2, change3)
+    print(change1, change2, change3, change4)

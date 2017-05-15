@@ -66,29 +66,41 @@ def plot_mountains(node_CNdrops_mountainassignment_passed, orig_core_nums, peak_
         sortedbypeaknumber_tuples = sorted(unsorted_tuples, key=lambda xyv: xyv[2], reverse=True)
         sortedbyCOREnumber_tuples = sorted(sortedbypeaknumber_tuples, key=lambda xyv: xyv[1], reverse=True)
         node_ordering_permountain[id] = [x for x, y, z in sortedbyCOREnumber_tuples]
-
+    """
+    data = []
     sizes = [len(node_ordering_permountain[x]) for x in node_ordering_permountain]
     total = sum(sizes)
     #print(sizes)
     print('base',sizes[0]/total)
+    data.append(sizes[0]/total)
 
     cnodes = [node_ordering_permountain[x] for x in node_ordering_permountain]
     core = [orig_core_nums[n] for n in cnodes[0]]
     mcore = max(core)
     #print('',len(core))
     print('top',len([c for c in core if c == mcore])/total)
+    data.append(len([c for c in core if c == mcore])/total)
 
     #top = [c for c in core if c == mcore]
     others = [c for c in core if c < mcore]
-    print('\nStep')
-    for i in xrange(10, 101, 10):
+    step_heights = list(set(others))
+    step_heights = step_heights[:int(len(step_heights)*0.2)]
+    print('Step Height', sum(step_heights)/len(step_heights))
+    data.append(sum(step_heights)/len(step_heights))
+    step_width = [len([c for c in core if c == n]) for n in step_heights]
+    print('Step Width', sum(step_width)/len(step_width))
+    data.append(sum(step_width)/len(step_width))
+    print(mcore)
+    #print(step_heights)
+
+    for i in xrange(20, 101, 20):
         print(i, np.percentile(others, i)/mcore)
 
     c_nodes = sorted(orig_core_nums.items(), key=operator.itemgetter(1), reverse=True)
     #print(c_nodes[0],c_nodes[-1])
 
-    s = [0]*10
-    th = [int(len(c_nodes)*i/10) for i in xrange(1,11)]
+    s = [0]*5
+    th = [int(len(c_nodes)*i/5) for i in xrange(1,6)]
 
     mountain_size = {}
     for n in node_to_plotmountain.values():
@@ -102,10 +114,13 @@ def plot_mountains(node_CNdrops_mountainassignment_passed, orig_core_nums, peak_
                 p = node_to_plotmountain[c_nodes[i][0]]
                 if mountain_size[p]/total <= 0.01:
                     s[j] += 1
-    print('\nThin')
+    print('Thin')
     for i in xrange(0, len(s)):
         print(i+1, s[i]/th[i])
-
+        data.append(s[i]/th[i])
+    print(data)
+    return data
+    """
 
     ### Part 3 ####
     #Creating a list 'fullnodeordering' of nodeIDs ordered in the way to be plotted
@@ -132,7 +147,7 @@ def plot_mountains(node_CNdrops_mountainassignment_passed, orig_core_nums, peak_
 
     plt.ylabel('Core Number or Peak Number', fontsize=20)
     plt.xlabel('Individual nodes', fontsize=20)
-    plt.legend(fontsize=18, bbox_to_anchor=(1, 1), prop={'size':18})
+    #plt.legend(fontsize=18, bbox_to_anchor=(1, 1), prop={'size':18})
     plt.xlim(0, len(G.nodes()))
     plt.ylim(0, max([orig_core_nums[x] for x in orig_core_nums]))
     ax.tick_params(axis='x', labelsize=18)
