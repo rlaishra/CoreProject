@@ -20,6 +20,7 @@ def readEdgelist(fname):
         for row in reader:
             print(row)
     """
+    return g
 
 def readData(fname):
     data = {}
