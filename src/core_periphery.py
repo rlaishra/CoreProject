@@ -59,7 +59,7 @@ class CorePeriphery(object):
             if graph is None:
                 continue
             for x in xrange(0, 5):
-                c = cr.coreness(s, return_correlation=True)
+                c = cr.coreness(g, return_correlation=True)
                 print('{} \t Network: {} \t Correlation: {}'.format(x, fname, c[1]))
                 print('{},{},{}'.format(x, fname, c), file=sfile)
 
