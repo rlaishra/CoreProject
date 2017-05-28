@@ -3,6 +3,7 @@ from __future__ import division, print_function
 import coreness as cr
 import networkx as nx
 import sys
+import os
 from pprint import pprint
 
 class CorePeriphery(object):
