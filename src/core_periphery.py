@@ -50,8 +50,8 @@ class CorePeriphery(object):
             return None
 
     def main(self):
-        #sfile = open(self._sname, 'w')
-        print('fname, exp_number, correlation', file=self._sname)
+        sfile = open(self._sname, 'w')
+        print('fname, exp_number, correlation', file=sfile)
         print(self._fpaths)
         for fname in self._fpaths:
             graph = self._readFile(self._fpaths[fname])
@@ -60,7 +60,7 @@ class CorePeriphery(object):
             for x in xrange(0, 5):
                 c = cr.coreness(s, return_correlation=True)
                 print('{} \t Network: {} \t Correlation: {}'.format(x, fname, c[1]))
-                print('{},{},{}'.format(x, fname, c), file=self._sname)
+                print('{},{},{}'.format(x, fname, c), file=sfile)
 
 if __name__ == '__main__':
     fname = sys.argv[1]
