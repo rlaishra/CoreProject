@@ -50,6 +50,7 @@ class CorePeriphery(object):
 
     def main(self, sname):
         print('fname, exp_number, correlation')
+        print(self._fpaths)
         for fname in self._fpaths:
             graph = self._readFile(self._fpaths[fname])
             if graph is None:
