@@ -4,6 +4,7 @@ import coreness as cr
 import networkx as nx
 import sys
 import os
+import csv
 from pprint import pprint
 
 class CorePeriphery(object):
@@ -52,7 +53,7 @@ class CorePeriphery(object):
     def main(self):
         sfile = open(self._sname, 'w')
         print('fname, exp_number, correlation', file=sfile)
-        print(self._fpaths)
+        print(self._fpaths.keys())
         for fname in self._fpaths:
             graph = self._readFile(self._fpaths[fname])
             if graph is None:
