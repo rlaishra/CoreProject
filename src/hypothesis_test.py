@@ -416,7 +416,7 @@ class Features(object):
         super(Features, self).__init__()
         self._data_path = data_dirname
         self._allowed_extensions = ['.csv', '.edgelist', '.mtx']
-        self._max_nodes = 50000
+        self._max_nodes = 20000
         self._data_path = self._getDataPaths()
         self._comments = '#'
 
@@ -522,13 +522,14 @@ class Features(object):
 
         nodes_added = set()
         while len(dnodes) > 0:
-            region = {}
+            region = {i/10:set() for i in xrange(0,11)}
+
             u = dnodes.pop(0)
             d = density[u]
             if d < 0:
                 break
             n = nodes[u].difference(nodes_added)
-            region[d] = n
+            region[d].update(n)
             nodes_added.update(n)
 
             stop = False
@@ -542,15 +543,14 @@ class Features(object):
                     s = graph.subgraph(nlist)
                     d = round(nx.density(s),1)
                     nlist.update(n)
-                    if d not in region:
-                        region[d] = set()
+                    #if d not in region:
+                    #    region[d] = set()
                     region[d].update(n)
                     nodes_added.update(n)
                 else:
                     i += 1
-            if len(region) > 2:
+            if sum([len(region[i]) for i in region]) > 3:
                 regions.append(region)
-            #print(len(region))
         #print([len(r) for r in regions])
         #print([(r,len(regions[0][r])) for r in regions[0]])
         # Merge regions with close densities
@@ -566,17 +566,42 @@ class Features(object):
             #print([(d, len(region[d])) for d in region])
             cregions.append(region)
         """
-        print(regions[0])
+        #print(regions[0])
         print('Number of regions: {}'.format(len(regions)))
+        return regions
 
+    def calculateFeatures(self, regions, graph):
+        size = 0
+        step_width = []
+        for i in xrange(0,len(regions)//10):
+            region = regions[i]
+            for d in region:
+                if len(region[d]) > 0:
+                    step_width.append(len(region[d]))
+                    size += len(region[d])
+        width = np.mean(step_width)
+        size = size / graph.number_of_nodes()
+        tran = nx.transitivity(graph)
 
-    def main(self):
+        return len(regions), width, size, tran
+
+    def saveResults(self, sname, data):
+        with open(sname, 'w') as f:
+            writer = csv.writer(f, delimiter=',')
+            for d in data:
+                writer.writerow(d)
+
+    def main(self, sname):
+        features = [['network','regions', 'width', 'size', 'transitivity']]
         for fname in self._data_path:
             graph = self._readFile(self._data_path[fname])
             if graph is None:
                 continue
-            self.decomposeDenseSubRegions(graph)
-
+            regions = self.decomposeDenseSubRegions(graph)
+            r, w, s, t = self.calculateFeatures(regions, graph)
+            features.append([fname, r, w, s, t])
+            print(features[-1])
+        self.saveResults(sname, features)
 
 if __name__ == '__main__':
     mode = int(sys.argv[1])
@@ -596,6 +621,7 @@ if __name__ == '__main__':
         mt.main(sname)
     elif mode == 2:
         fname = sys.argv[2]
+        sname = sys.argv[3]
 
         ft = Features(fname)
-        ft.main()
+        ft.main(sname)
