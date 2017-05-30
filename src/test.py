@@ -9,19 +9,6 @@ from utils import statistics
 from pprint import pprint
 import numpy as np
 
-def readEdgelist(fname):
-    g = nx.read_edgelist(fname)
-    print(g.number_of_nodes(), g.number_of_edges())
-    """
-    with open(fname, 'r') as f:
-        while f.readline().startswith('#'):
-            continue
-        reader = csv.reader(f, delimiter=' ')
-        for row in reader:
-            print(row)
-    """
-    return g
-
 def readData(fname):
     data = {}
     with open(fname, 'r') as f:

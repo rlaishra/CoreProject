@@ -68,7 +68,7 @@ def coreness(G,return_correlation=False):
 	initialC = numpy.random.rand(len(A)) # can we do better? Is it important? Maybe use constraint or centrality?
 
 	# run a bfgs optimizers that optimizes correlation between calculated coreness scores and the ideal model
-	best = optimize.fmin_l_bfgs_b(_core_fitness, initialC, args=(A,None), approx_grad=True, bounds=[(0.0,1.0) for i in xrange(len(A))], maxiter=100, epsilon=0.1)
+	best = optimize.fmin_l_bfgs_b(_core_fitness, initialC, args=(A,None), approx_grad=True, bounds=[(0.0,1.0) for i in xrange(len(A))], maxiter=20, epsilon=0.1)
 
 	part = {}
 	for node in G:

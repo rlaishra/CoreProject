@@ -24,6 +24,7 @@ class HypothesisTest(object):
         self._allowed_extensions = ['.csv', '.edgelist', '.mtx']
         self._fpaths = self._getFiles()
         self._max_nodes = 50000         # Graphs with nodes above this are not considered
+        self._comments = '#'
 
     def _readMtx(self, fpath):
         edges = []
@@ -50,7 +51,10 @@ class HypothesisTest(object):
             graph = nx.Graph()
             graph.add_edges_from(edges)
         else:
-            graph = nx.read_edgelist(fdata['path'], comments=comment)
+            graph = nx.read_edgelist(fdata['path'], comments=self._comments)
+
+        # Remove self loops
+        graph.remove_edges_from(graph.selfloop_edges())
 
         if graph.number_of_nodes() <= self._max_nodes:
             print(nx.info(graph))
@@ -77,6 +81,7 @@ class CompileData(object):
         self._max_nodes = 50000
         self._data_path = self._getDataPaths()
         self._mean_path = self._getMeanPaths()
+        self._comments = '#'
 
     def _readMtx(self, fpath):
         edges = []
@@ -146,7 +151,7 @@ class CompileData(object):
             graph = nx.Graph()
             graph.add_edges_from(edges)
         else:
-            graph = nx.read_edgelist(fdata['path'], comments=comment)
+            graph = nx.read_edgelist(fdata['path'], comments=self._comments)
 
         if graph.number_of_nodes() <= self._max_nodes:
             print(nx.info(graph))
@@ -405,6 +410,174 @@ class CompileData(object):
             for d in data:
                 writer.writerow(d)
 
+class Features(object):
+    """docstring for Features."""
+    def __init__(self, data_dirname):
+        super(Features, self).__init__()
+        self._data_path = data_dirname
+        self._allowed_extensions = ['.csv', '.edgelist', '.mtx']
+        self._max_nodes = 50000
+        self._data_path = self._getDataPaths()
+        self._comments = '#'
+
+    def _readMtx(self, fpath):
+        edges = []
+        with open(fpath, 'r') as f:
+            reader = csv.reader(f, delimiter=' ')
+            for row in reader:
+                if len(row) == 2:
+                    edges.append(row)
+        return edges
+
+    def _getDataPaths(self):
+        # Get all the files under the given dir
+        fpaths = {}
+        for (dirpath, dirnames, filenames) in os.walk(self._data_path):
+            for f in filenames:
+                fname, ext = os.path.splitext(f)
+                if ext in self._allowed_extensions:
+                    fpaths[fname] = {'path': os.path.join(dirpath, f), 'ext': ext}
+        return(fpaths)
+
+    def _readFile(self, fdata):
+        if fdata['ext'] == '.mtx':
+            edges = self._readMtx(fdata['path'])
+            graph = nx.Graph()
+            graph.add_edges_from(edges)
+        else:
+            graph = nx.read_edgelist(fdata['path'], comments=self._comments)
+
+        if graph.number_of_nodes() <= self._max_nodes:
+            print(nx.info(graph))
+            graph = self.removeSelfLoops(graph)
+            graph = self.removeSingletons(graph)
+            return graph
+        else:
+            return None
+
+    def removeSelfLoops(self, G):
+        nodes_with_selfloops = G.nodes_with_selfloops()
+
+        for node in nodes_with_selfloops:
+            G.remove_edge(node, node)
+
+        return G
+
+    def removeSingletons(self, G):
+        degrees=G.degree()
+
+        for node in degrees.keys():
+            if degrees[node]==0:
+                G.remove_node(node)
+
+        return G
+
+
+    def getTransitivity(self, graph):
+        return nx.transitivity(graph)
+
+    def localDensity(self, graph, node, k=2):
+        nodes = [[node]]
+        i = 0
+        while len(nodes) <= k:
+            candidate = nodes[i]
+            neighbors = []
+            for u in candidate:
+                n = graph.neighbors(u)
+                neighbors.append(graph.neighbors(u))
+            nodes += neighbors
+        nodes = set([item for sublist in nodes[:k] for item in sublist])
+
+        density = -1
+        if len(nodes) > k + 1:
+            subgraph = graph.subgraph(nodes)
+            density = nx.density(subgraph)
+        #print(nodes)
+
+        return density, nodes
+
+    def _sortNodesDensity(self, density, nodes):
+        # Sort nodes by decreasing order of their density
+        # If tie, node with more neighbors is placed ahead
+        dv = [(n, density[n], len(nodes[n])) for n in density]
+        dtype = [('name', 'S10'), ('density', float), ('neighbors', int)]
+        dv = np.array(dv, dtype=dtype)
+        dv = np.sort(dv, order=['density', 'neighbors']).tolist()
+        dv.reverse()
+        dn = [v[0] for v in dv]
+        return dn
+
+
+    def decomposeDenseSubRegions(self, graph):
+        regions = []
+
+        density = {}
+        nodes = {}
+        for u in graph.nodes():
+            d, n = self.localDensity(graph, u, 3)
+            density[u] =  round(d,1)
+            nodes[u] = n
+
+        dnodes = self._sortNodesDensity(density, nodes)
+
+        nodes_added = set()
+        while len(dnodes) > 0:
+            region = {}
+            u = dnodes.pop(0)
+            d = density[u]
+            if d < 0:
+                break
+            n = nodes[u].difference(nodes_added)
+            region[d] = n
+            nodes_added.update(n)
+
+            stop = False
+            i = 0
+            nlist = n
+            while len(dnodes) > i:
+                u = dnodes[i]
+                if density[u] <= d:
+                    dnodes.pop(i)
+                    n = nodes[u].difference(nodes_added)
+                    s = graph.subgraph(nlist)
+                    d = round(nx.density(s),1)
+                    nlist.update(n)
+                    if d not in region:
+                        region[d] = set()
+                    region[d].update(n)
+                    nodes_added.update(n)
+                else:
+                    i += 1
+            if len(region) > 2:
+                regions.append(region)
+            #print(len(region))
+        #print([len(r) for r in regions])
+        #print([(r,len(regions[0][r])) for r in regions[0]])
+        # Merge regions with close densities
+        """
+        cregions = []
+        for r in regions:
+            region = {i/20:set() for i in xrange(0,20)}
+            for i in xrange(0, 20):
+                d1 = i/20
+                for s in r:
+                    if s >= d1:
+                        region[d1].update(r[s])
+            #print([(d, len(region[d])) for d in region])
+            cregions.append(region)
+        """
+        print(regions[0])
+        print('Number of regions: {}'.format(len(regions)))
+
+
+    def main(self):
+        for fname in self._data_path:
+            graph = self._readFile(self._data_path[fname])
+            if graph is None:
+                continue
+            self.decomposeDenseSubRegions(graph)
+
+
 if __name__ == '__main__':
     mode = int(sys.argv[1])
 
@@ -414,10 +587,15 @@ if __name__ == '__main__':
 
         ht = HypothesisTest(fname)
         ht.main(sname)
-    else:
+    elif mode == 1:
         fname1 = sys.argv[2]
         fname2 = sys.argv[3]
         sname = sys.argv[4]
 
         mt = CompileData(fname1, fname2)
         mt.main(sname)
+    elif mode == 2:
+        fname = sys.argv[2]
+
+        ft = Features(fname)
+        ft.main()

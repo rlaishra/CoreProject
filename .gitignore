@@ -4,3 +4,11 @@ db/*
 *.pyc
 outputs/*
 data/*
+
+.Rhistory
+
+.RData
+
+.Rhistory
+
+.Rhistory
