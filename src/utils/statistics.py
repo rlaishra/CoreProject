@@ -43,7 +43,7 @@ class Statistics(object):
 
     def monotonic(self, x):
         slope = -1 if np.polyfit(range(0, len(x)), x, 1)[0] < 0 else 1
-        print(slope)
+        #print(slope)
         change = 0
 
         slope = -1
@@ -123,16 +123,18 @@ if __name__ == '__main__':
         for r in reader:
             cdata.append(r)
 
-    data = [[],[],[],[]]
+    data = [[],[],[],[],[]]
     for d in cdata[1:]:
         data[0].append(float(d[1]))
         data[1].append(float(d[3]))
         data[2].append(float(d[5]))
         data[3].append(float(d[7]))
+        data[4].append(float(d[9]))
 
     change1 = stats.monotonic(data[0])
     change2 = stats.monotonic(data[1])
     change3 = stats.monotonic(data[2])
     change4 = stats.monotonic(data[3])
+    change5 = stats.monotonic(data[4])
 
-    print(change1, change2, change3, change4)
+    print(change1, change2, change3, change4, change5)
