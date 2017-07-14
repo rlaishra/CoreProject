@@ -12,44 +12,57 @@ def readGraph(fname):
     graph = nx.read_edgelist(fname)
     return graph
 
-def addEdges(graph, e):
+def addEdges(graph, ne, edges, vedges):
     cn =nx.core_number(graph)
-    nodes = sorted(cn, key=cn.get, reverse=True)[:int(graph.number_of_nodes()*0.1)]
     core = np.array(cn.values())
 
     i = 0
+    for e in edges:
+        graph.add_edge(e[0],e[1])
+        tcore = nx.core_number(graph)
+        tcore = np.array(tcore.values())
 
-    print('Number of candidates: {}'.format(len(nodes)))
+        diff = np.linalg.norm(core - tcore)
 
-    while len(nodes) > 2 and i < e:
-        u = nodes.pop(0)
-        c = [v for v in nodes if v not in graph.neighbors(u)]
-        for v in nodes:
-            graph.add_edge(u,v)
-            tcore = nx.core_number(graph)
-            tcore = np.array(tcore.values())
+        if diff > 0:
+            graph.remove_edge(e[0], e[1])
+        else:
+            i += 1
+            print(i, e[0], e[1], cn[e[0]], cn[e[1]], vedges[e])
 
-            diff = np.linalg.norm(core - tcore)
-
-            if diff > 0:
-                graph.remove_edge(u,v)
-            else:
-                i += 1
-                print(i, u, v, cn[u], cn[v])
-            if i >= e:
-                break
+        if i >= en:
+            break
     return graph
+
+def possibleEdges(graph):
+    core = nx.core_number(graph)
+    nodes = graph.nodes()
+
+    vedges = {}
+    while len(nodes) > 2:
+        u = nodes.pop()
+        for v in nodes:
+            vedges[(u,v)] = core[u]*core[v]
+    edges = sorted(vedges, key=vedges.get, reverse=True)
+
+    return edges, vedges
 
 if __name__ == '__main__':
     fname = sys.argv[1]
     sname = sys.argv[2]
 
     nedges = xrange(0,11)
+    count = graph.number_of_edges()/100
+
+    graph = readGraph(fname)
+    edges, vedges = possibleEdges(graphs)
 
     for e in nedges:
         tsname = sname + str(e) + '.csv'
+        ne = int(count * e)
+
         graph = readGraph(fname)
         print(nx.info(graph))
-        graph = addEdges(graph, int(graph.number_of_edges()*e/100))
+        graph = addEdges(graph, ne, edges, vedges)
         print(nx.info(graph))
         nx.write_edgelist(graph, tsname)
