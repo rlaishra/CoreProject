@@ -47,9 +47,9 @@ if __name__ == '__main__':
     nedges = xrange(0,11)
 
     for e in nedges:
-        tsname = sname + e + '.csv'
+        tsname = sname + str(e) + '.csv'
         graph = readGraph(fname)
         print(nx.info(graph))
         graph = addEdges(graph, e)
         print(nx.info(graph))
-        nx.write_edgelist(graph, sname)
+        nx.write_edgelist(graph, tsname)
