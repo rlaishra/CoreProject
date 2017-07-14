@@ -30,7 +30,7 @@ def addEdges(graph, ne, edges, vedges):
             i += 1
             print(i, e[0], e[1], cn[e[0]], cn[e[1]], vedges[e])
 
-        if i >= en:
+        if i >= ne:
             break
     return graph
 
@@ -56,6 +56,8 @@ if __name__ == '__main__':
     graph = readGraph(fname)
     edges, vedges = possibleEdges(graph)
     count = graph.number_of_edges()/100
+
+    print('Number of possible edges: {}'.format(len(edges)))
 
     for e in nedges:
         tsname = sname + str(e) + '.csv'
