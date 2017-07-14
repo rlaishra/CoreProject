@@ -41,12 +41,15 @@ def addEdges(graph, e):
     return graph
 
 if __name__ == '__main__':
-    e = int(sys.argv[3])
     fname = sys.argv[1]
     sname = sys.argv[2]
 
-    graph = readGraph(fname)
-    print(nx.info(graph))
-    graph = addEdges(graph, e)
-    print(nx.info(graph))
-    nx.write_edgelist(graph, sname)
+    nedges = xrange(0,11)
+
+    for e in nedges:
+        tsname = sname + e + '.csv'
+        graph = readGraph(fname)
+        print(nx.info(graph))
+        graph = addEdges(graph, e)
+        print(nx.info(graph))
+        nx.write_edgelist(graph, sname)
