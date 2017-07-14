@@ -50,6 +50,6 @@ if __name__ == '__main__':
         tsname = sname + str(e) + '.csv'
         graph = readGraph(fname)
         print(nx.info(graph))
-        graph = addEdges(graph, e)
+        graph = addEdges(graph, int(graph.number_of_edges()*e/100))
         print(nx.info(graph))
         nx.write_edgelist(graph, tsname)
