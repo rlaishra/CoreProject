@@ -52,10 +52,10 @@ if __name__ == '__main__':
     sname = sys.argv[2]
 
     nedges = xrange(0,11)
-    count = graph.number_of_edges()/100
 
     graph = readGraph(fname)
     edges, vedges = possibleEdges(graphs)
+    count = graph.number_of_edges()/100
 
     for e in nedges:
         tsname = sname + str(e) + '.csv'
