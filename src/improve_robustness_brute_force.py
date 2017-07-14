@@ -17,7 +17,10 @@ def addEdges(graph, ne, edges, vedges):
     core = np.array(cn.values())
 
     i = 0
-    for e in edges:
+
+    while len(edges) > 0:
+        e = edges.pop(0)
+
         graph.add_edge(e[0],e[1])
         tcore = nx.core_number(graph)
         tcore = np.array(tcore.values())
@@ -32,7 +35,7 @@ def addEdges(graph, ne, edges, vedges):
 
         if i >= ne:
             break
-    return graph
+    return graph, edges
 
 def possibleEdges(graph):
     core = nx.core_number(graph)
@@ -61,10 +64,10 @@ if __name__ == '__main__':
 
     for e in nedges:
         tsname = sname + str(e) + '.csv'
-        ne = int(count * e)
+        ne = int(count)
 
-        graph = readGraph(fname)
+        #graph = readGraph(fname)
         print(nx.info(graph))
-        graph = addEdges(graph, ne, edges, vedges)
+        graph, edges = addEdges(graph, ne, edges, vedges)
         print(nx.info(graph))
         nx.write_edgelist(graph, tsname)
