@@ -54,7 +54,7 @@ if __name__ == '__main__':
     nedges = xrange(0,11)
 
     graph = readGraph(fname)
-    edges, vedges = possibleEdges(graphs)
+    edges, vedges = possibleEdges(graph)
     count = graph.number_of_edges()/100
 
     for e in nedges:
