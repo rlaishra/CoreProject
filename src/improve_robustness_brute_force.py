@@ -12,7 +12,7 @@ def readGraph(fname):
     graph = nx.read_edgelist(fname)
     return graph
 
-def addEdges(graph, ne, edges, vedges):
+def addEdges(graph, ne, edges, vedges, id=None):
     cn =nx.core_number(graph)
     core = np.array(cn.values())
 
@@ -31,7 +31,7 @@ def addEdges(graph, ne, edges, vedges):
             graph.remove_edge(e[0], e[1])
         else:
             i += 1
-            print(i, e[0], e[1], cn[e[0]], cn[e[1]], vedges[e])
+            print(id, i, e[0], e[1], cn[e[0]], cn[e[1]], vedges[e])
 
         if i >= ne:
             break
@@ -68,6 +68,6 @@ if __name__ == '__main__':
 
         #graph = readGraph(fname)
         print(nx.info(graph))
-        graph, edges = addEdges(graph, ne, edges, vedges)
+        graph, edges = addEdges(graph, ne, edges, vedges, e)
         print(nx.info(graph))
         nx.write_edgelist(graph, tsname)
