@@ -87,16 +87,16 @@ drawMeanKendallCorrelation <- function(fname, t) {
   data <- read.csv(file = fname, sep = ',')
   pl <- ggplot(data = data, aes(x=change))
   
-  #pl <- pl + geom_line(aes(y = correlation_kt_100, color='All'))
+  pl <- pl + geom_line(aes(y = correlation_kt_100, color='All'))
   #pl <- pl + geom_line(aes(y = correlation_kt_80, color='Top 80%'))
-  pl <- pl + geom_line(aes(y = correlation_kt_60, color='Top 60%'))
-  pl <- pl + geom_line(aes(y = correlation_kt_40, color='Top 40%'))
+  pl <- pl + geom_line(aes(y = correlation_kt_50, color='Top 50%'))
+  pl <- pl + geom_line(aes(y = correlation_kt_20, color='Top 20%'))
  # pl <- pl + geom_line(aes(y = correlation_kt_20, color='Top 20%'))
   #pl <- pl + geom_line(aes(y = correlation_5, color='Top 5%'))
   
- # pl <- pl + geom_ribbon(aes(ymin=correlation_kt_100 - std_kt_100, ymax=correlation_kt_100 + std_kt_100, fill='All'), alpha=0.2)
-  pl <- pl + geom_ribbon(aes(ymin=correlation_kt_60 - std_kt_60, ymax=correlation_kt_60 + std_kt_60, fill='Top 60%'), alpha=0.2)
-  pl <- pl + geom_ribbon(aes(ymin=correlation_kt_40 - std_kt_40, ymax=correlation_kt_40 + std_kt_40, fill='Top 40%'), alpha=0.2)
+  pl <- pl + geom_ribbon(aes(ymin=correlation_kt_100 - std_kt_100, ymax=correlation_kt_100 + std_kt_100, fill='All'), alpha=0.2)
+  pl <- pl + geom_ribbon(aes(ymin=correlation_kt_50 - std_kt_50, ymax=correlation_kt_50 + std_kt_50, fill='Top 50%'), alpha=0.2)
+  pl <- pl + geom_ribbon(aes(ymin=correlation_kt_20 - std_kt_20, ymax=correlation_kt_20 + std_kt_20, fill='Top 20%'), alpha=0.2)
  # pl <- pl + geom_ribbon(aes(ymin=correlation_kt_10 - std_kt_10, ymax=correlation_kt_10 + std_kt_10, fill='Top 10%'), alpha=0.2)
   #pl <- pl + geom_ribbon(aes(ymin=correlation_5-std_5, ymax=correlation_5+std_5, fill='Top 5%'), alpha=0.2)
   
@@ -189,4 +189,38 @@ drawError <- function(fname,k) {
   p <- p + geom_point(data=data[which(data$core==k),], aes(x=components, y=error_0.2))
   #p <- p + geom_line(data=data[which(data$core==k),], aes(x=components, y=error_1))
   return(p)
+}
+
+compareRobustness <- function(fname) {
+  fname0 <- paste(fname, '_0_core_mean_edges_delete_random.csv', sep = '')
+  fname1 <- paste(fname, '_100_core_mean_edges_delete_random.csv', sep = '')
+  fname2 <- paste(fname, '_200_core_mean_edges_delete_random.csv', sep = '')
+  fname3 <- paste(fname, '_300_core_mean_edges_delete_random.csv', sep = '')
+  fname4 <- paste(fname, '_400_core_mean_edges_delete_random.csv', sep = '')
+  fname5 <- paste(fname, '_500_core_mean_edges_delete_random.csv', sep = '')
+  
+  d0 <- read.csv(fname0, header = TRUE, sep = ',')
+  d1 <- read.csv(fname1, header = TRUE, sep = ',')
+  d2 <- read.csv(fname2, header = TRUE, sep = ',')
+  d3 <- read.csv(fname3, header = TRUE, sep = ',')
+  d4 <- read.csv(fname4, header = TRUE, sep = ',')
+  d5 <- read.csv(fname5, header = TRUE, sep = ',')
+  
+  pl <- ggplot()
+  
+  pl <- pl + geom_line(data = d0, aes(x=change, y=correlation_kt_10, color='0'))
+  pl <- pl + geom_line(data = d1, aes(x=change, y=correlation_kt_10, color='100'))
+  pl <- pl + geom_line(data = d2, aes(x=change, y=correlation_kt_10, color='200'))
+  pl <- pl + geom_line(data = d3, aes(x=change, y=correlation_kt_10, color='300'))
+  pl <- pl + geom_line(data = d4, aes(x=change, y=correlation_kt_10, color='400'))
+  pl <- pl + geom_line(data = d5, aes(x=change, y=correlation_kt_10, color='500'))
+  
+  pl <- pl + geom_ribbon(data = d0, aes(x=change, ymin=correlation_kt_10 - std_kt_10, ymax=correlation_kt_10 + std_kt_10, fill='0'), alpha=0.1)
+  pl <- pl + geom_ribbon(data = d1, aes(x=change, ymin=correlation_kt_10 - std_kt_10, ymax=correlation_kt_10 + std_kt_10, fill='1'), alpha=0.1)
+  pl <- pl + geom_ribbon(data = d2, aes(x=change, ymin=correlation_kt_10 - std_kt_10, ymax=correlation_kt_10 + std_kt_10, fill='2'), alpha=0.1)
+  pl <- pl + geom_ribbon(data = d3, aes(x=change, ymin=correlation_kt_10 - std_kt_10, ymax=correlation_kt_10 + std_kt_10, fill='3'), alpha=0.1)
+  pl <- pl + geom_ribbon(data = d4, aes(x=change, ymin=correlation_kt_10 - std_kt_10, ymax=correlation_kt_10 + std_kt_10, fill='4'), alpha=0.1)
+  pl <- pl + geom_ribbon(data = d5, aes(x=change, ymin=correlation_kt_10 - std_kt_10, ymax=correlation_kt_10 + std_kt_10, fill='5'), alpha=0.1)
+ 
+  return(pl)
 }

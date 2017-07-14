@@ -42,17 +42,17 @@ class Statistics(object):
         return cor
 
     def monotonic(self, x):
-        slope = -1 if np.polyfit(range(0, len(x)), x, 1)[0] < 0 else 1
+        #slope = -1 if np.polyfit(range(0, len(x)), x, 1)[0] < 0 else 1
         #print(slope)
-        change = 0
+        change = []
 
-        slope = -1
+        #slope = -1
         # Normalize
         if min(x) == max(x):
             return -1
-        x_min = min(x)
-        x_max = max(x) - x_min
-        x = [(v - x_min)/x_max for v in x]
+        #x_min = min(x)
+        #x_max = max(x) - x_min
+        #x = [(v - x_min)/x_max for v in x]
 
         for i in xrange(1, len(x)):
             u = x[i-1]
@@ -68,10 +68,15 @@ class Statistics(object):
             c = (v - u) + 1
 
             if v > u:
-                change += c * c
+                change.append(c * c)
+                #change += (v-u)
             #else:
             #    change += c
-        return change/len(x)
+        #return change
+        #if len(change) == 0:
+        #    return 0
+        #print(np.std(change))
+        return sum(change)/len(x)
 
 
     def increasing(self, x):
@@ -129,12 +134,12 @@ if __name__ == '__main__':
         data[1].append(float(d[3]))
         data[2].append(float(d[5]))
         data[3].append(float(d[7]))
-        data[4].append(float(d[9]))
+        #data[4].append(float(d[9]))
 
     change1 = stats.monotonic(data[0])
     change2 = stats.monotonic(data[1])
     change3 = stats.monotonic(data[2])
     change4 = stats.monotonic(data[3])
-    change5 = stats.monotonic(data[4])
+    #change5 = stats.monotonic(data[4])
 
-    print(change1, change2, change3, change4, change5)
+    print(change1, change2, change3, change4)

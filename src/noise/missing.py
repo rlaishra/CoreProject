@@ -15,3 +15,7 @@ class MissingData(object):
         remove = random.sample([e for e in graph.edges()], num)
         graph.remove_edges_from(remove)
         return graph
+
+    #def removeHighDegreeEdges(self, graph, num):
+        # Remove edges based on the probability that is proportional to the
+        # product of the degree of the nodes
