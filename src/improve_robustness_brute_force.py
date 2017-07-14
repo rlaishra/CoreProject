@@ -54,18 +54,21 @@ if __name__ == '__main__':
     fname = sys.argv[1]
     sname = sys.argv[2]
 
-    nedges = xrange(0,11)
+    nedges = xrange(1,11)
 
     graph = readGraph(fname)
     edges, vedges = possibleEdges(graph)
     count = graph.number_of_edges()/100
 
+    tsname = sname + '0.csv'
+    nx.write_edgelist(graph, tsname)
+
     print('Number of possible edges: {}'.format(len(edges)))
 
+    ne = int(count)
+    
     for e in nedges:
         tsname = sname + str(e) + '.csv'
-        ne = int(count)
-
         #graph = readGraph(fname)
         print(nx.info(graph))
         graph, edges = addEdges(graph, ne, edges, vedges, e)
