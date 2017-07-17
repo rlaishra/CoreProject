@@ -10,6 +10,7 @@ import random
 
 def readGraph(fname):
     graph = nx.read_edgelist(fname)
+    graph.remove_edges_from(graph.selfloop_edges())
     return graph
 
 def addEdges(graph, ne, edges, vedges, id=None):
@@ -36,6 +37,7 @@ def addEdges(graph, ne, edges, vedges, id=None):
         if i >= ne:
             break
     return graph, edges
+
 
 def possibleEdges(graph):
     core = nx.core_number(graph)
@@ -66,7 +68,7 @@ if __name__ == '__main__':
     print('Number of possible edges: {}'.format(len(edges)))
 
     ne = int(count)
-    
+
     for e in nedges:
         tsname = sname + str(e) + '.csv'
         #graph = readGraph(fname)
