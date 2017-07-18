@@ -22,7 +22,7 @@ if __name__ == '__main__':
         adj = int(sys.argv[4]) > 0          # 1 if input file is adjacency list, 0 otherwise
         mode = sys.argv[5]
         kcore_exp = kcore.KCoreExperiment(fname, sname, adj, mode)
-        cnumber = kcore_exp.runExperiment(100, 1, 81)
+        cnumber = kcore_exp.runExperiment(50, 1, 51)
 
     if identifier == 1 :
         # k-truss experimnet with missing nodes and edges
