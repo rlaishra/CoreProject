@@ -27,6 +27,12 @@ class Statistics(object):
             return False
         n = len(l1)
         s = 0
+
+        v = zip(l1, l2)
+        v.sort()
+        
+        l1, l2 = zip(*v)
+
         for i in xrange(0, n):
             u1 = l1[i]
             u2 = l2[i]
@@ -40,6 +46,25 @@ class Statistics(object):
                     s -= 1
         cor = s/(n*(n-1)*0.5)
         return cor
+
+    def _isDecreasing(self, x):
+        for i in xrange(1, len(x)):
+            if x[i-1] < x[i]:
+                return False
+        return True
+
+    def distanceFromDecreasing(self, x):
+        """
+        Returns the total value to be subtracted to make the sequence decreasing
+        """
+        error = 0
+        while not self._isDecreasing(x):
+            for i in xrange(1, len(x)):
+                if x[i-1] < x[i]:
+                    error += x[i] - x[i-1]
+                    x[i] = x[i-1]
+        return error/len(x)
+
 
     def monotonic(self, x):
         #slope = -1 if np.polyfit(range(0, len(x)), x, 1)[0] < 0 else 1
@@ -66,18 +91,24 @@ class Statistics(object):
             """
 
             c = (v - u) + 1
+            #c = (v - u)
 
             if v > u:
+                #change.append(c)
                 change.append(c * c)
                 #change += (v-u)
+            else:
+                change.append(0)
             #else:
             #    change += c
         #return change
-        #if len(change) == 0:
-        #    return 0
-        #print(np.std(change))
-        return sum(change)/len(x)
-
+        #print(change)
+        if len(change) == 0:
+           return 0
+        #print(np.std(change), len(change))
+        print(sum([n*n for n in change])/(len(change)-1))
+        #return sum(change)/len(x)
+        return np.mean(change)
 
     def increasing(self, x):
         change = 0
@@ -136,10 +167,12 @@ if __name__ == '__main__':
         data[3].append(float(d[7]))
         #data[4].append(float(d[9]))
 
-    change1 = stats.monotonic(data[0])
-    change2 = stats.monotonic(data[1])
-    change3 = stats.monotonic(data[2])
-    change4 = stats.monotonic(data[3])
+    #change1 = stats.monotonic(data[0])
+    #change2 = stats.monotonic(data[1])
+    #change3 = stats.monotonic(data[2])
+    #change4 = stats.monotonic(data[3])
     #change5 = stats.monotonic(data[4])
 
-    print(change1, change2, change3, change4)
+    print(stats.distanceFromDecreasing(data[3]))
+
+    #print(change1, change2, change3, change4)

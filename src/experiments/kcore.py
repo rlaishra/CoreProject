@@ -42,7 +42,7 @@ class KCoreExperiment(object):
         self.number_of_nodes = self.graph.number_of_nodes()
         self.number_of_edges = self.graph.number_of_edges()
         if top is None:
-            self.top = [1, 0.5, 0.2, 0.1]                  # Percentage of top nodes consider
+            self.top = [x/100 for x in range(100,1,-5)]            # Percentage of top nodes consider
         else:
             self.top = top
         self.stats = statistics.Statistics()
@@ -118,7 +118,6 @@ class KCoreExperiment(object):
                 self.graph = noise.removeRandomEdges(self.graph, size)
             elif mode == 1:
                 self.graph = noise.rewire(self.graph, size)
-            #cnumber[i*step] = self.coreNumber()
             cnumber[i*step] = nx.core_number(self.graph)
 
         #    if i*step % 10 == 0:
@@ -142,12 +141,12 @@ class KCoreExperiment(object):
         return topn
 
     def resultsMean(self, data):
-        cdata = {}
+        cdata = {d[1]:[[] for _ in self.top] for d in data}
+        
         for d in data:
-            if d[0] not in cdata:
-                cdata[d[0]] = [[] for _ in self.top]
             for i in xrange(0, len(self.top)):
-                cdata[d[0]][i].append(d[2*i + 1])
+                cdata[d[1]][i].append(d[i + 2])
+        
         mdata = []
         for i in cdata:
             d = [i]
@@ -160,7 +159,7 @@ class KCoreExperiment(object):
             mdata.append(d)
         return mdata
 
-    def saveMeanResults(self, data, iden, sp=False):
+    def saveMeanResults(self, data, iden):
         data = self.resultsMean(data)
         fname = self.sname + '_core_mean_' + iden + '.csv'
         with open(fname, 'w') as f:
@@ -168,23 +167,19 @@ class KCoreExperiment(object):
             header = ['change']
             for p in self.top:
                 v = str(int(p*100))
-                header += ['correlation_kt_'+v, 'std_kt_'+v]
-                if sp:
-                    header += ['correlation_sp_'+v, 'std_sp_'+v]
+                header += ['correlation_mean_'+v, 'correlation_std_'+v]
             writer.writerow(header)
             for d in data:
                 writer.writerow(d)
 
-    def saveResults(self, data, iden, sp=False):
+    def saveResults(self, data, iden):
         fname = self.sname + '_core_' + iden + '.results'
         with open(fname, 'w') as f:
             writer = csv.writer(f, delimiter=',')
-            header = ['change']
+            header = ['exp','change']
             for p in self.top:
                 v = str(int(p*100))
-                header += ['correlation_kt_'+v, 'std_kt_'+v]
-                if sp:
-                    header += ['correlation_sp_'+v, 'std_sp_'+v]
+                header += ['correlation_'+v]
             writer.writerow(header)
             for d in data:
                 writer.writerow(d)
@@ -267,58 +262,26 @@ class KCoreExperiment(object):
 
     def expRandomMissingEdges(self, iter, step, end):
         data = []
-        histogram = self.newHistogram(step, end)
-        ls = []
 
-        for _ in xrange(0,iter):
+        for _i in xrange(0,iter):
+            print('Experiment {} of {}'.format(_i, iter))
             self.readData()
             cnumber = self.runExperimentEdges(step, end, mode=0)
             all_nodes = set([n for n in cnumber[0]])
-            edata = []
             for i in cnumber:
-                t_data = [i]
-                common_nodes = list(all_nodes.intersection([n for n in cnumber[i]]))
+                t_data = [_i, i]
                 for p in self.top:
-                    cnodes = self.selectTopN(cnumber[i], common_nodes,\
+                    cnodes = self.selectTopN(cnumber[0], all_nodes,\
                      int(self.number_of_nodes * p))
                     x1 = [cnumber[0][n] for n in cnodes]
                     x2 = [cnumber[i][n] for n in cnodes]
-                    k_tau, k_p_value = stats.kendalltau(x1, x2, nan_policy='omit')
-                    #s_tau, s_p_value = stats.spearmanr(x1, x2)
-                    #k_tau = self.stats.kendalltau(x1,x2)
-                    #k_p_value = 0
-                    #t_data += [k_tau, k_p_value, s_tau, s_p_value]
-                    t_data += [k_tau, k_p_value]
-                    #tau, p_value = stats.spearmanr(x1, x2)
-                    #tau = self.stats.kendalltau(x1, x2)
-                    #p_value = 0
-                    #tau = 1 if np.isnan(tau) else tau
-                    #self.getHistogram(x2, histogram, i, p)
-                    edata.append(t_data)
+                    k_tau, _ = stats.kendalltau(x1, x2, nan_policy='omit')
+                    #k_tau = self.stats.kendalltau(x1, x2)
+                    t_data.append(k_tau)
                 data.append(t_data)
-                print(t_data)
-            # Least square error
-        """
-            ls_x = []
-            ls_y = [[] for _ in self.top]
-            for r in edata:
-                ls_x.append(r[0])
-                for i,_ in enumerate(self.top):
-                    ls_y[i].append(r[i*2+1])
-            ls = [[] for _ in self.top]
-            for i,_ in enumerate(ls_y):
-                v = np.polyfit(ls_x, ls_y[i], 1, full=True)
-                ls[i].append(v[1][0])
-        errors = [[np.mean([i for i in l if not np.isnan(i)]),\
-         np.std([i for i in l if not np.isnan(i)])] for l in ls]
-        """
-        if self.sname is not None:
-            self.saveMeanResults(data, 'edges_delete_random', sp=False)
-            #self.processHistogram(histogram, 'edges_delete_random')
-            self.saveResults(data, 'edges_delete_random')
-        else:
-            print(errors)
-            return data, histogram, data, errors
+            
+        self.saveMeanResults(data, 'edges_delete_random')
+        self.saveResults(data, 'edges_delete_random')
 
     def expRandomRewireEdges(self, iter, step, end):
         data = []

@@ -193,11 +193,11 @@ drawError <- function(fname,k) {
 
 compareRobustness <- function(fname) {
   fname0 <- paste(fname, '_0_core_mean_edges_delete_random.csv', sep = '')
-  fname1 <- paste(fname, '_100_core_mean_edges_delete_random.csv', sep = '')
-  fname2 <- paste(fname, '_200_core_mean_edges_delete_random.csv', sep = '')
-  fname3 <- paste(fname, '_300_core_mean_edges_delete_random.csv', sep = '')
-  fname4 <- paste(fname, '_400_core_mean_edges_delete_random.csv', sep = '')
-  fname5 <- paste(fname, '_500_core_mean_edges_delete_random.csv', sep = '')
+  fname1 <- paste(fname, '_1_core_mean_edges_delete_random.csv', sep = '')
+  fname2 <- paste(fname, '_2_core_mean_edges_delete_random.csv', sep = '')
+  fname3 <- paste(fname, '_3_core_mean_edges_delete_random.csv', sep = '')
+  fname4 <- paste(fname, '_4_core_mean_edges_delete_random.csv', sep = '')
+  fname5 <- paste(fname, '_5_core_mean_edges_delete_random.csv', sep = '')
   
   d0 <- read.csv(fname0, header = TRUE, sep = ',')
   d1 <- read.csv(fname1, header = TRUE, sep = ',')
