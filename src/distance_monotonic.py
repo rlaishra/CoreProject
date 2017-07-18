@@ -23,7 +23,7 @@ if __name__ == '__main__':
 	i = int(sys.argv[2]) 			# The top i nodes
 	k = int(sys.argv[3]) + 1		# The cost upto which error is calculated
 
-	i = int((100 - i)/5) + 2
+	i = int((100 - i)/10) + 2
 
 	print('Max Removed: {}'.format(k-1))
 

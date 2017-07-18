@@ -16,5 +16,7 @@ if os.path.exists(fpath) and os.path.exists(spath):
 
 			print('Processing: {}'.format(fname))
 
-			kcore_exp = kcore.KCoreExperiment(fname, sname, False, '010')
+			top = range(100, 0, 10)
+
+			kcore_exp = kcore.KCoreExperiment(fname, sname, False, '010', top=top)
 			kcore_exp.runExperiment(50, 1, 51)
