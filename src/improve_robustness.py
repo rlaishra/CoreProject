@@ -178,10 +178,9 @@ def pruneCandidateEdges(graph, oedges, nedges, cnumber, pc, changed=None, size=N
 			print(len(pruned_list), len(edges))
 
 		"""
-		if (cnumber[u] <= cnumber[v] and u in changed\
-		 and _checkIfCoreNumberChange(graph, carray, u, v))\
-		 or (cnumber[v] <= cnumber[u] and v in changed\
-		 and _checkIfCoreNumberChange(graph, carray, u, v)):
+		if ((cnumber[u] <= cnumber[v] and u in changed)\
+		 or (cnumber[v] <= cnumber[u] and v in changed))\
+		 and _checkIfCoreNumberChange(graph, carray, u, v):
 		 	if len(oedges)%500 == 0:
 		 		print('1 \t Edges size \tO: {} N: {}'.format(len(oedges), len(nedges)))
 			continue
