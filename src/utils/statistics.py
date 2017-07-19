@@ -57,13 +57,15 @@ class Statistics(object):
         """
         Returns the total value to be subtracted to make the sequence decreasing
         """
-        error = 0
+        error = []
+
         while not self._isDecreasing(x):
             for i in xrange(1, len(x)):
                 if x[i-1] < x[i]:
-                    error += x[i] - x[i-1]
+                    error.append(x[i] - x[i-1])
                     x[i] = x[i-1]
-        return error/len(x)
+
+        return np.sum(error)/len(x)
 
 
     def monotonic(self, x):
@@ -106,7 +108,7 @@ class Statistics(object):
         if len(change) == 0:
            return 0
         #print(np.std(change), len(change))
-        print(sum([n*n for n in change])/(len(change)-1))
+        #print(sum([n*n for n in change])/(len(change)-1))
         #return sum(change)/len(x)
         return np.mean(change)
 

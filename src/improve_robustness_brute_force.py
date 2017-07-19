@@ -46,7 +46,8 @@ def possibleEdges(graph):
     vedges = {}
     while len(nodes) > 2:
         u = nodes.pop()
-        for v in nodes:
+        n = nodes.difference(graph.neighbors(u))
+        for v in n:
             vedges[(u,v)] = core[u]*core[v]
     edges = sorted(vedges, key=vedges.get, reverse=True)
 

@@ -34,7 +34,8 @@ if __name__ == '__main__':
 
 	for i in data:
 		d = data[i][:k]
-		dist.append(stats.distanceFromDecreasing(d))
+		#dist.append(stats.distanceFromDecreasing(d))
+		dist.append(stats.monotonic(d))
 	
 	m = np.mean(dist)
 	s = np.std(dist)
