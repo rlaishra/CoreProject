@@ -2,7 +2,7 @@ from experiments import kcore
 import sys
 import os
 
-identifiers = ['p2p09', 'hamster']
+identifiers = ['p2p09_10', 'hamster_10']
 vals = range(0, 11)
 
 fpath = sys.argv[1]
