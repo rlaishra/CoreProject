@@ -180,7 +180,7 @@ def generateCandidateEdges(graph, cnumber, pc, cutoff):
 
 def main(fname, sname, k, m=10):
 	t0 = time.time()
-    t = []
+	t = []
 
 	graph = readGraph(fname)
 	cnumber = nx.core_number(graph)
@@ -222,9 +222,9 @@ def main(fname, sname, k, m=10):
 			nx.write_edgelist(graph, tsname)
 
 			t1 = time.time()
-      		t.append(t1-t0)
-      		print('Time: {}'.format(t[-1]))
-      print('time',t)
+			t.append(t1-t0)
+			print('Time: {}'.format(t[-1]))
+	  print('time',t)
 
 
 if __name__ == '__main__':
