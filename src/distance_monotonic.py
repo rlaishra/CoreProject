@@ -4,6 +4,7 @@ from utils import statistics as st
 import sys
 import csv
 import numpy as np
+import os
 
 def readData(fname, i):
 	data = {}
@@ -18,22 +19,14 @@ def readData(fname, i):
 			data[row[0]].append(float(row[i]))
 	return data
 
-if __name__ == '__main__':
-	fname = sys.argv[1]
-	i = int(sys.argv[2]) 			# The top i nodes
-	k = int(sys.argv[3]) + 1		# The cost upto which error is calculated
-
-	i = int((100 - i)/5) + 2
-
-	print('Max Removed: {}'.format(k-1))
-
+def main(fname, i):
 	data = readData(fname, i)
 	stats = st.Statistics()
 
 	dist = []
 
 	for i in data:
-		d = data[i][:k]
+		d = data[i]
 		#dist.append(stats.distanceFromDecreasing(d))
 		dist.append(stats.monotonic(d))
 	
@@ -41,3 +34,36 @@ if __name__ == '__main__':
 	s = np.std(dist)
 
 	print('Distance Mean: {} \t Std: {}'.format(m,s))
+
+	return m, s
+
+if __name__ == '__main__':
+	identifiers = ['p2p09_10', 'hamster_10']
+	vals = range(0, 11)
+
+	fpath = sys.argv[1]
+	spath = sys.argv[2]
+
+	if os.path.exists(fpath) and os.path.exists(spath):
+		for i in identifiers:
+			sname = os.path.join(spath, i + '_error.csv')
+			header = ['edges']
+			for x in xrange(5, 100, 5):
+				header += ['mean_' + str(x), 'std_' + str(x)]
+
+			data = [header]
+			for v in vals:
+				fname = os.path.join(fpath, i + '_' + str(v) + '_core_edges_delete_random.results')
+				print('Processing: {}'.format(fname))
+				tdata = [v]
+				for j in xrange(5,100,5):
+					k = int((100 - j)/5) + 2
+
+					m, s = main(fname, k)
+					tdata += [m,s]
+				data.append(tdata)
+		
+			with open(sname, 'w') as f:
+				writer = csv.writer(f, delimiter=',')
+				for d in data:
+					writer.writerow(d)

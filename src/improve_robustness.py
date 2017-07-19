@@ -182,7 +182,7 @@ def pruneCandidateEdges(graph, oedges, nedges, cnumber, pc, changed=None, size=N
 		 and _checkIfCoreNumberChange(graph, carray, u, v))\
 		 or (cnumber[v] <= cnumber[u] and v in changed\
 		 and _checkIfCoreNumberChange(graph, carray, u, v)):
-		 	if len(oedges)%1000 == 0:
+		 	if len(oedges)%500 == 0:
 		 		print('1 \t Edges size \tO: {} N: {}'.format(len(oedges), len(nedges)))
 			continue
 
@@ -205,8 +205,8 @@ def generateCandidateEdges(graph, cnumber, pc, cutoff, size):
 		u = nodes.pop()
 		n = nodes.difference(graph.neighbors(u))
 		for v in n:
-			if cnumber[v] != cnumber[u]: 				# (Temp) This will filter out edges that will not change core number
-				vedges[(u,v)] = cnumber[u]*cnumber[v]
+			#if cnumber[v] != cnumber[u]: 				# (Temp) This will filter out edges that will not change core number
+			vedges[(u,v)] = cnumber[u]*cnumber[v]
 
 	oedges = sorted(vedges, key=vedges.get, reverse=True)
 	print('Unpruned candidates: {}'.format(len(oedges)))
