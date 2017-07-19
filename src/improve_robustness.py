@@ -8,6 +8,7 @@ import numpy as np
 import sys
 import os
 import cPickle as pickle
+import time
 
 def readGraph(fname):
 	graph = nx.read_edgelist(fname)
@@ -178,18 +179,21 @@ def generateCandidateEdges(graph, cnumber, pc, cutoff):
 
 
 def main(fname, sname, k, m=10):
+	t0 = time.time()
+    t = []
+
 	graph = readGraph(fname)
 	cnumber = nx.core_number(graph)
 	mcd = computeMCD(graph, cnumber)
 	pc = generatePureCore(graph, cnumber, mcd)
 	
-	pc_size = [len(pc[u]) for u in pc]
+	#pc_size = [len(pc[u]) for u in pc]
 
 	cutoff = sorted(cnumber.values(), reverse=True)[int(len(cnumber)*k/100)]
 	
 	print(nx.info(graph))
-	print('Max core: {} \t Cut off: {}'.format(max(cnumber.values()), cutoff))
-	print('Pure Core Size \t Max: {} \t Mean: {}'.format(max(pc_size), np.mean(pc_size)))
+	#print('Max core: {} \t Cut off: {}'.format(max(cnumber.values()), cutoff))
+	#print('Pure Core Size \t Max: {} \t Mean: {}'.format(max(pc_size), np.mean(pc_size)))
 
 	edges, vedges = generateCandidateEdges(graph, cnumber, pc, cutoff)
 	print('Number of candidate: {}'.format(len(edges)))
@@ -216,6 +220,11 @@ def main(fname, sname, k, m=10):
 			print('Saving: {}'.format(tsname))
 			print(nx.info(graph))
 			nx.write_edgelist(graph, tsname)
+
+			t1 = time.time()
+      		t.append(t1-t0)
+      		print('Time: {}'.format(t[-1]))
+      print('time',t)
 
 
 if __name__ == '__main__':

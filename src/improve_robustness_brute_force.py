@@ -7,6 +7,7 @@ import networkx as nx
 import numpy as np
 import sys
 import random
+import time
 
 def readGraph(fname):
     graph = nx.read_edgelist(fname)
@@ -32,7 +33,7 @@ def addEdges(graph, ne, edges, vedges, id=None):
             graph.remove_edge(e[0], e[1])
         else:
             i += 1
-            print(id, i, e[0], e[1], cn[e[0]], cn[e[1]], vedges[e])
+            #print(id, i, e[0], e[1], cn[e[0]], cn[e[1]], vedges[e])
 
         if i >= ne:
             break
@@ -41,7 +42,7 @@ def addEdges(graph, ne, edges, vedges, id=None):
 
 def possibleEdges(graph):
     core = nx.core_number(graph)
-    nodes = graph.nodes()
+    nodes = set(graph.nodes())
 
     vedges = {}
     while len(nodes) > 2:
@@ -56,6 +57,9 @@ def possibleEdges(graph):
 if __name__ == '__main__':
     fname = sys.argv[1]
     sname = sys.argv[2]
+
+    t0 = time.time()
+    t = []
 
     nedges = xrange(1,11)
 
@@ -77,3 +81,8 @@ if __name__ == '__main__':
         graph, edges = addEdges(graph, ne, edges, vedges, e)
         print(nx.info(graph))
         nx.write_edgelist(graph, tsname)
+        
+        t1 = time.time()
+        t.append(t1-t0)
+        print('Time: {}'.format(t[-1]))
+    print('time',t)
