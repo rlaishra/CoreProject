@@ -9,9 +9,20 @@ import sys
 import os
 import cPickle as pickle
 import time
+import csv
 
 def readGraph(fname):
-	graph = nx.read_edgelist(fname)
+	if fname.endswith('mtx'):
+		edges = []
+		with open(fname, 'r') as f:
+			reader = csv.reader(f, delimiter=' ')
+			for row in reader:
+				if len(row) == 2:
+					edges.append(row)
+		graph = nx.Graph()
+		graph.add_edges_from(edges)
+	else:
+		graph = nx.read_edgelist(fname)
 	graph.remove_edges_from(graph.selfloop_edges())
 	return graph
 
@@ -209,13 +220,13 @@ def pruneCandidateEdges(graph, oedges, nedges, cnumber, pc, changed=None, size=N
 		if ((cnumber[u] <= cnumber[v] and u in changed)\
 		 or (cnumber[v] <= cnumber[u] and v in changed))\
 		 and _checkIfCoreNumberChange(kcore, carray, u, v):
-		 	if len(oedges)%500 == 0:
-		 		print('1 \t Edges size \tO: {} N: {}'.format(len(oedges), len(nedges)))
+			if len(oedges)%500 == 0:
+				print('1 \t Edges size \tO: {} N: {}'.format(len(oedges), len(nedges)))
 			continue
 
 		nedges.append((u,v))
 		if len(nedges)%1000 == 0:
-		 	print('2 \t Edges size \tO: {} N: {}'.format(len(oedges), len(nedges)))
+			print('2 \t Edges size \tO: {} N: {}'.format(len(oedges), len(nedges)))
 		
 
 	return oedges, nedges
