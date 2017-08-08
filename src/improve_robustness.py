@@ -72,6 +72,30 @@ def generatePureCore(graph, cnumber, mcd):
 	
 	return pc
 
+def getRCD(graph, cnumber):
+	data = {}
+
+	for u in graph.nodes():
+		if cnumber[u] == 0:
+			data[u] = np.inf
+			continue
+		neighbors = graph.neighbors(u)
+		cd = len([v for v in neighbors if cnumber[u] == cnumber[v]])
+		data[u] = cd/cnumber[u]
+
+	return data
+
+def edgePriority(nedges, rcd):
+	priority = {}
+
+	for e in nedges:
+		priority[e] = rcd[e[0]] * rcd[e[1]]
+
+	edges = sorted(priority, key=priority.get, reverse=False)
+	#print(np.mean([priority[e] for e in edges[:10]]), np.mean([priority[e] for e in edges[-
+	#	10:]]))
+	return edges
+
 def updatePureCore(graph, cnumber, mcd, pc, e):
 	"""
 	Update the pure core of all affected nodes on adding edge e
@@ -129,7 +153,7 @@ def _checkIfCoreNumberChange(graph, carray, u, v):
 	return False
 
 
-def pruneCandidateEdges(graph, oedges, nedges, cnumber, pc, changed=None, size=None):
+def pruneCandidateEdges(graph, oedges, nedges, cnumber, pc, changed=None, size=None, carray=None, kcore=None, cutoff=0):
 	"""
 	Remove the edges which will change core number
 	"""
@@ -143,7 +167,11 @@ def pruneCandidateEdges(graph, oedges, nedges, cnumber, pc, changed=None, size=N
 		return oedges, nedges
 	#print('edges', len(oedges), len(nedges))
 
-	carray = np.array(cnumber.values())
+	if carray is None:
+		carray = np.array(cnumber.values())
+
+	if kcore is None:
+		kcore = nx.k_core(graph, cutoff)
 	
 		
 	print('Changed count: {}'.format(len(changed)))
@@ -154,9 +182,9 @@ def pruneCandidateEdges(graph, oedges, nedges, cnumber, pc, changed=None, size=N
 		u = e[0]
 		v = e[1]
 		if (u in changed or v in changed) and\
-		  _checkIfCoreNumberChange(graph, carray, u, v):
+		  _checkIfCoreNumberChange(kcore, carray, u, v):
 			remove.append((u,v))
-			if len(remove)%10 == 0:
+			if len(remove)%100 == 0:
 				print('Remove: {} of {}'.format(len(remove), len(nedges)))
 	
 	remove = set(remove)
@@ -180,38 +208,42 @@ def pruneCandidateEdges(graph, oedges, nedges, cnumber, pc, changed=None, size=N
 		"""
 		if ((cnumber[u] <= cnumber[v] and u in changed)\
 		 or (cnumber[v] <= cnumber[u] and v in changed))\
-		 and _checkIfCoreNumberChange(graph, carray, u, v):
+		 and _checkIfCoreNumberChange(kcore, carray, u, v):
 		 	if len(oedges)%500 == 0:
 		 		print('1 \t Edges size \tO: {} N: {}'.format(len(oedges), len(nedges)))
 			continue
 
 		nedges.append((u,v))
-		if len(nedges)%100 == 0:
+		if len(nedges)%1000 == 0:
 		 	print('2 \t Edges size \tO: {} N: {}'.format(len(oedges), len(nedges)))
 		
 
 	return oedges, nedges
 
 
-def generateCandidateEdges(graph, cnumber, pc, cutoff, size):
+def generateCandidateEdges(graph, cnumber, pc, cutoff, size, kcore, carray, rcd):
 	"""
 	Generate list of edges which can be added without change in core number
 	"""
 	nodes = set([n for n in cnumber if cnumber[n] > cutoff])
 	
 	vedges = {}
+	oedges = []
 	while len(nodes) >= 2:
 		u = nodes.pop()
 		n = nodes.difference(graph.neighbors(u))
 		for v in n:
 			#if cnumber[v] != cnumber[u]: 				# (Temp) This will filter out edges that will not change core number
 			vedges[(u,v)] = cnumber[u]*cnumber[v]
+			oedges.append((u, v))
 
-	oedges = sorted(vedges, key=vedges.get, reverse=True)
+	#oedges = sorted(vedges, key=vedges.get, reverse=True)
+	oedges = edgePriority(oedges, rcd)
 	print('Unpruned candidates: {}'.format(len(oedges)))
 	
+	#oedges = edgePriority(oedges, rcd)
 	nedges = []
-	oedges, nedges = pruneCandidateEdges(graph, oedges, nedges, cnumber, pc, changed=None, size=size)
+	oedges, nedges = pruneCandidateEdges(graph, oedges, nedges, cnumber, pc, changed=None, size=size, carray=carray, kcore=kcore)
 	print('Pruned candidates: {}'.format(len(nedges)))
 
 	return oedges, nedges, vedges
@@ -226,6 +258,7 @@ def main(fname, sname, k, m=10):
 	cnumber = nx.core_number(graph)
 	mcd = computeMCD(graph, cnumber)
 	pc = generatePureCore(graph, cnumber, mcd)
+	rcd = getRCD(graph, cnumber)
 	
 	#pc_size = [len(pc[u]) for u in pc]
 
@@ -237,8 +270,15 @@ def main(fname, sname, k, m=10):
 	print('Max core: {} \t Cut off: {}'.format(max(cvals), cutoff))
 	#print('Pure Core Size \t Max: {} \t Mean: {}'.format(max(pc_size), np.mean(pc_size)))
 
-	oedges, nedges, vedges = generateCandidateEdges(graph, cnumber, pc, cutoff, step)
+	# Global values for comparison
+	# The kcore subgraph greater then thershold for camparisons
+	kcore = nx.k_core(graph, cutoff)
+	carray = np.array(nx.core_number(kcore).values())
+
+	oedges, nedges, vedges = generateCandidateEdges(graph, cnumber, pc, cutoff, step, kcore, carray, rcd)
 	print('Number of candidate: {} {}'.format(len(nedges),len(oedges)))
+
+	#nedges = edgePriority(nedges, rcd)
 
 	i = 0
 
@@ -253,7 +293,10 @@ def main(fname, sname, k, m=10):
 
 		mcd = updateMCD(graph, cnumber, mcd, e)
 		pc, changed = updatePureCore(graph, cnumber, mcd, pc, e)
-		oedges, nedges = pruneCandidateEdges(graph, oedges, nedges, cnumber, pc, changed, step)
+		oedges, nedges = pruneCandidateEdges(graph, oedges, nedges, cnumber, pc, changed, step, carray=carray, kcore=kcore)
+
+		if i%100 == 0:
+			nedges = edgePriority(nedges, rcd) 
 
 		if i%step == 0:
 			tsname = sname + str(int(i/step)) + '.csv'

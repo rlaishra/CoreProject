@@ -65,6 +65,11 @@ class Statistics(object):
 		"""
 		Returns the total value to be subtracted to make the sequence decreasing
 		"""
+		#print(x)
+		x = [i if not np.isnan(i) else 1 for i in x]
+		#x = [0.5 * (i + 1) for i in x]
+		#print(x)
+
 		error = []
 		ss = self.longest_decreasing_subsequence(x)
 		sel = [None for _ in xrange(0, len(x))]
@@ -81,10 +86,13 @@ class Statistics(object):
 		v = ss[1]
 		for i in xrange(0, len(x)):
 			if sel[i] is None:
-				#print(np.abs(x[i]-u))
-				#print(np.abs(x[i]-v))
-				e = min(np.abs(x[i]-u), np.abs(x[i]-v))
-				error.append(e*e)
+				if x[i] != 0 :
+					#print(np.abs(x[i]-u))
+					#print(np.abs(x[i]-v))
+					e = min(np.abs(x[i]-u), np.abs(x[i]-v))
+					#e = np.abs(e/x[i])
+					error.append(e*e)
+					#error.append(e)
 			else:
 				u = sel[i]
 				if i < len(ss)-1:
@@ -93,8 +101,11 @@ class Statistics(object):
 					v = u
 
 		#print(np.mean(error), np.std(error))
-
-		return np.sqrt(np.sum(error)/len(x))
+		#print(error)
+		if len(error) == 0:
+			return 0
+		#return np.mean(error)
+		return np.sqrt(np.sum(error)/len(error))
 
 		while not self._isDecreasing(x):
 			for i in xrange(1, len(x)):
@@ -102,7 +113,7 @@ class Statistics(object):
 					error.append(x[i] - x[i-1])
 					x[i] = x[i-1]
 
-		return np.sum(error)/len(x)
+		return np.sum(error)/len(error)
 
 
 	def monotonic(self, x):
@@ -129,8 +140,8 @@ class Statistics(object):
 				change += c*c
 			"""
 
-			c = (v - u) + 1
-			#c = (v - u)
+			#c = (v - u) + 1
+			c = (v - u)
 
 			if v > u:
 				#change.append(c/u)

@@ -1,4 +1,5 @@
 library('ggplot2')
+require(gridExtra)
 
 drawNodesFoundTruss <- function(fname, t) {
   data <- read.csv(file = fname, sep = ',')
@@ -218,30 +219,126 @@ compareRobustness <- function(fname) {
   
   pl <- ggplot()
   
-  pl <- pl + geom_line(data = d0, aes(x=change, y=correlation_mean_10, color='00'))
-  pl <- pl + geom_line(data = d1, aes(x=change, y=correlation_mean_10, color='01'))
-  pl <- pl + geom_line(data = d2, aes(x=change, y=correlation_mean_10, color='02'))
-  pl <- pl + geom_line(data = d3, aes(x=change, y=correlation_mean_10, color='03'))
-  pl <- pl + geom_line(data = d4, aes(x=change, y=correlation_mean_10, color='04'))
-  pl <- pl + geom_line(data = d5, aes(x=change, y=correlation_mean_10, color='05'))
-  pl <- pl + geom_line(data = d6, aes(x=change, y=correlation_mean_10, color='06'))
-  pl <- pl + geom_line(data = d7, aes(x=change, y=correlation_mean_10, color='07'))
-  pl <- pl + geom_line(data = d8, aes(x=change, y=correlation_mean_10, color='08'))
-  pl <- pl + geom_line(data = d9, aes(x=change, y=correlation_mean_10, color='09'))
-  pl <- pl + geom_line(data = d10, aes(x=change, y=correlation_mean_10, color='10'))
+  pl <- pl + geom_line(data = d0, aes(x=change, y=correlation_mean_15, color='00'))
+  pl <- pl + geom_line(data = d1, aes(x=change, y=correlation_mean_15, color='01'))
+  pl <- pl + geom_line(data = d2, aes(x=change, y=correlation_mean_15, color='02'))
+  pl <- pl + geom_line(data = d3, aes(x=change, y=correlation_mean_15, color='03'))
+  pl <- pl + geom_line(data = d4, aes(x=change, y=correlation_mean_15, color='04'))
+  pl <- pl + geom_line(data = d5, aes(x=change, y=correlation_mean_15, color='05'))
+  pl <- pl + geom_line(data = d6, aes(x=change, y=correlation_mean_15, color='06'))
+  pl <- pl + geom_line(data = d7, aes(x=change, y=correlation_mean_15, color='07'))
+  pl <- pl + geom_line(data = d8, aes(x=change, y=correlation_mean_15, color='08'))
+  pl <- pl + geom_line(data = d9, aes(x=change, y=correlation_mean_15, color='09'))
+  pl <- pl + geom_line(data = d10, aes(x=change, y=correlation_mean_15, color='10'))
   
-  pl <- pl + geom_ribbon(data = d0, aes(x=change, ymin=correlation_mean_10 - correlation_std_10, ymax=correlation_mean_10 + correlation_std_10, fill='00'), alpha=0.1)
-  pl <- pl + geom_ribbon(data = d1, aes(x=change, ymin=correlation_mean_10 - correlation_std_10, ymax=correlation_mean_10 + correlation_std_10, fill='01'), alpha=0.1)
-  pl <- pl + geom_ribbon(data = d2, aes(x=change, ymin=correlation_mean_10 - correlation_std_10, ymax=correlation_mean_10 + correlation_std_10, fill='02'), alpha=0.1)
-  pl <- pl + geom_ribbon(data = d3, aes(x=change, ymin=correlation_mean_10 - correlation_std_10, ymax=correlation_mean_10 + correlation_std_10, fill='03'), alpha=0.1)
-  pl <- pl + geom_ribbon(data = d4, aes(x=change, ymin=correlation_mean_10 - correlation_std_10, ymax=correlation_mean_10 + correlation_std_10, fill='04'), alpha=0.1)
-  pl <- pl + geom_ribbon(data = d5, aes(x=change, ymin=correlation_mean_10 - correlation_std_10, ymax=correlation_mean_10 + correlation_std_10, fill='05'), alpha=0.1)
-  pl <- pl + geom_ribbon(data = d6, aes(x=change, ymin=correlation_mean_10 - correlation_std_10, ymax=correlation_mean_10 + correlation_std_10, fill='06'), alpha=0.1)
-  pl <- pl + geom_ribbon(data = d7, aes(x=change, ymin=correlation_mean_10 - correlation_std_10, ymax=correlation_mean_10 + correlation_std_10, fill='07'), alpha=0.1)
-  pl <- pl + geom_ribbon(data = d8, aes(x=change, ymin=correlation_mean_10 - correlation_std_10, ymax=correlation_mean_10 + correlation_std_10, fill='08'), alpha=0.1)
-  pl <- pl + geom_ribbon(data = d9, aes(x=change, ymin=correlation_mean_10 - correlation_std_10, ymax=correlation_mean_10 + correlation_std_10, fill='09'), alpha=0.1)
-  pl <- pl + geom_ribbon(data = d10, aes(x=change, ymin=correlation_mean_10 - correlation_std_10, ymax=correlation_mean_10 + correlation_std_10, fill='10'), alpha=0.1)
+  pl <- pl + geom_ribbon(data = d0, aes(x=change, ymin=correlation_mean_15 - correlation_std_15, ymax=correlation_mean_15 + correlation_std_15, fill='00'), alpha=0.1)
+  pl <- pl + geom_ribbon(data = d1, aes(x=change, ymin=correlation_mean_15 - correlation_std_15, ymax=correlation_mean_15 + correlation_std_15, fill='01'), alpha=0.1)
+  pl <- pl + geom_ribbon(data = d2, aes(x=change, ymin=correlation_mean_15 - correlation_std_15, ymax=correlation_mean_15 + correlation_std_15, fill='02'), alpha=0.1)
+  pl <- pl + geom_ribbon(data = d3, aes(x=change, ymin=correlation_mean_15 - correlation_std_15, ymax=correlation_mean_15 + correlation_std_15, fill='03'), alpha=0.1)
+  pl <- pl + geom_ribbon(data = d4, aes(x=change, ymin=correlation_mean_15 - correlation_std_15, ymax=correlation_mean_15 + correlation_std_15, fill='04'), alpha=0.1)
+  pl <- pl + geom_ribbon(data = d5, aes(x=change, ymin=correlation_mean_15 - correlation_std_15, ymax=correlation_mean_15 + correlation_std_15, fill='05'), alpha=0.1)
+  pl <- pl + geom_ribbon(data = d6, aes(x=change, ymin=correlation_mean_15 - correlation_std_15, ymax=correlation_mean_15 + correlation_std_15, fill='06'), alpha=0.1)
+  pl <- pl + geom_ribbon(data = d7, aes(x=change, ymin=correlation_mean_15 - correlation_std_15, ymax=correlation_mean_15 + correlation_std_15, fill='07'), alpha=0.1)
+  pl <- pl + geom_ribbon(data = d8, aes(x=change, ymin=correlation_mean_15 - correlation_std_15, ymax=correlation_mean_15 + correlation_std_15, fill='08'), alpha=0.1)
+  pl <- pl + geom_ribbon(data = d9, aes(x=change, ymin=correlation_mean_15 - correlation_std_15, ymax=correlation_mean_15 + correlation_std_15, fill='09'), alpha=0.1)
+  pl <- pl + geom_ribbon(data = d10, aes(x=change, ymin=correlation_mean_15 - correlation_std_15, ymax=correlation_mean_15 + correlation_std_15, fill='10'), alpha=0.1)
   
   
+  return(pl)
+}
+
+plotRobustness <- function(fname) {
+  data <- read.csv(fname, header = TRUE, sep = ',')
+  
+  pl <- ggplot(data = data)
+  
+  pl <- pl + geom_line(aes(x=edges, y=mean_5, color='05'))
+  pl <- pl + geom_line(aes(x=edges, y=mean_10, color='10'))
+  pl <- pl + geom_line(aes(x=edges, y=mean_15, color='15'))
+  pl <- pl + geom_line(aes(x=edges, y=mean_20, color='20'))
+  
+  pl <- pl + geom_ribbon(aes(x=edges, ymin=mean_5 - std_5, ymax=mean_5 + std_5, fill='05'), alpha=0.1)
+  pl <- pl + geom_ribbon(aes(x=edges, ymin=mean_10 - std_10, ymax=mean_10 + std_10, fill='10'), alpha=0.1)
+  pl <- pl + geom_ribbon(aes(x=edges, ymin=mean_15 - std_15, ymax=mean_15 + std_15, fill='15'), alpha=0.1)
+  pl <- pl + geom_ribbon(aes(x=edges, ymin=mean_20 - std_20, ymax=mean_20 + std_20, fill='20'), alpha=0.1)
+  
+  pl <- pl + scale_y_log10()
+  return(pl)
+}
+
+deltaCoreDistribution <- function(fname, removed) {
+  dat <- read.csv(fname, header = TRUE, sep = ',')
+  mc <- median(dat$core)
+  dat <- dat[which(dat$core > mc & dat$removed == removed),]
+  dat$bins <- cut(dat$core, breaks = 2, labels = 0:1)
+  dat$delta_core <- dat$delta_core * dat$core
+  q.y <- quantile(dat$delta_core, c(0,0.25, 0.5, 0.75,1))
+  q.x <- quantile(dat$rcd, c(0,0.25,0.50,0.75,1))
+  
+  x.25 <- quantile(dat[which(dat$delta_core >= q.y[[1]] & dat$delta_core < q.y[[2]]),]$rcd, c(0.25,0.50,0.75))
+  x.50 <- quantile(dat[which(dat$delta_core >= q.y[[2]] & dat$delta_core < q.y[[3]]),]$rcd, c(0.25,0.50,0.75))
+  x.75 <- quantile(dat[which(dat$delta_core >= q.y[[3]] & dat$delta_core < q.y[[4]]),]$rcd, c(0.25,0.50,0.75))
+  x.100 <- quantile(dat[which(dat$delta_core >= q.y[[4]] & dat$delta_core <= q.y[[5]]),]$rcd, c(0.25,0.50,0.75))
+  
+  y.25 <- quantile(dat[which(dat$rcd >= q.x[[1]] & dat$rcd < q.x[[2]]),]$delta_core, c(0.25,0.50,0.75))
+  y.50 <- quantile(dat[which(dat$rcd >= q.x[[2]] & dat$rcd < q.x[[3]]),]$delta_core, c(0.25,0.50,0.75))
+  y.75 <- quantile(dat[which(dat$rcd >= q.x[[3]] & dat$rcd < q.x[[4]]),]$delta_core, c(0.25,0.50,0.75))
+  y.100 <- quantile(dat[which(dat$rcd >= q.x[[4]] & dat$rcd <= q.x[[5]]),]$delta_core, c(0.25,0.50,0.75))
+  
+  #  print(q.y)
+  #  print(q.x)
+  # # print(x.25)
+  # # print(x.50)
+  # # print(x.75)
+  # # print(x.100)
+  # print(y.100)
+  
+  # print(mean(dat[which(dat$rcd > q.x[[4]] & dat$rcd < q.x[[5]]),]$delta_core))
+  
+  p1 <- ggplot(data=dat)
+  p1 <- p1 + geom_bin2d(aes(x=rcd, y=delta_core), bins=30)
+  p1 <- p1 + geom_hline(yintercept = q.y[2:4], color='RED')
+  # p1 <- p1 + geom_vline(xintercept = q.x[2:4], color='RED')
+  # p1 <- p1 + facet_grid(. ~ bins)
+  # return(p1)
+  
+  p1 <- p1 + geom_linerange(x=x.25[[1]], ymin=q.y[[1]], ymax=q.y[[2]], color='GREEN')
+  p1 <- p1 + geom_linerange(x=x.25[[2]], ymin=q.y[[1]], ymax=q.y[[2]], color='GREEN')
+  p1 <- p1 + geom_linerange(x=x.25[[3]], ymin=q.y[[1]], ymax=q.y[[2]], color='GREEN')
+  
+  p1 <- p1 + geom_linerange(x=x.50[[1]], ymin=q.y[[2]], ymax=q.y[[3]], color='GREEN')
+  p1 <- p1 + geom_linerange(x=x.50[[2]], ymin=q.y[[2]], ymax=q.y[[3]], color='GREEN')
+  p1 <- p1 + geom_linerange(x=x.50[[3]], ymin=q.y[[2]], ymax=q.y[[3]], color='GREEN')
+  
+  p1 <- p1 + geom_linerange(x=x.75[[1]], ymin=q.y[[3]], ymax=q.y[[4]], color='GREEN')
+  p1 <- p1 + geom_linerange(x=x.75[[2]], ymin=q.y[[3]], ymax=q.y[[4]], color='GREEN')
+  p1 <- p1 + geom_linerange(x=x.75[[3]], ymin=q.y[[3]], ymax=q.y[[4]], color='GREEN')
+  
+  p1 <- p1 + geom_linerange(x=x.100[[1]], ymin=q.y[[4]], ymax=q.y[[5]], color='GREEN')
+  p1 <- p1 + geom_linerange(x=x.100[[2]], ymin=q.y[[4]], ymax=q.y[[5]], color='GREEN')
+  p1 <- p1 + geom_linerange(x=x.100[[3]], ymin=q.y[[4]], ymax=q.y[[5]], color='GREEN')
+  
+  p2 <- ggplot(data=dat)
+  p2 <- p2 + geom_bin2d(aes(x=rcd, y=delta_core), bins = 30)
+  p2 <- p2 + geom_vline(xintercept = q.x[2:4], color='RED')
+  # p2 <- p2 + facet_grid(bins ~ .)
+  
+  p2 <- p2 + geom_segment(aes(y=y.25[[1]], yend=y.25[[1]], x = q.x[[1]], xend=q.x[[2]]), color='GREEN')
+  p2 <- p2 + geom_segment(aes(y=y.25[[2]], yend=y.25[[2]], x = q.x[[1]], xend=q.x[[2]]), color='GREEN')
+  p2 <- p2 + geom_segment(aes(y=y.25[[3]], yend=y.25[[3]], x = q.x[[1]], xend=q.x[[2]]), color='GREEN')
+ 
+  p2 <- p2 + geom_segment(aes(y=y.50[[1]], yend=y.50[[1]], x = q.x[[2]], xend=q.x[[3]]), color='GREEN')
+  p2 <- p2 + geom_segment(aes(y=y.50[[2]], yend=y.50[[2]], x = q.x[[2]], xend=q.x[[3]]), color='GREEN')
+  p2 <- p2 + geom_segment(aes(y=y.50[[3]], yend=y.50[[3]], x = q.x[[2]], xend=q.x[[3]]), color='GREEN')
+  
+  p2 <- p2 + geom_segment(aes(y=y.75[[1]], yend=y.75[[1]], x = q.x[[3]], xend=q.x[[4]]), color='GREEN')
+  p2 <- p2 + geom_segment(aes(y=y.75[[2]], yend=y.75[[2]], x = q.x[[3]], xend=q.x[[4]]), color='GREEN')
+  p2 <- p2 + geom_segment(aes(y=y.75[[3]], yend=y.75[[3]], x = q.x[[3]], xend=q.x[[4]]), color='GREEN')
+  
+  p2 <- p2 + geom_segment(aes(y=y.100[[1]], yend=y.100[[1]], x = q.x[[4]], xend=q.x[[5]]), color='GREEN')
+  p2 <- p2 + geom_segment(aes(y=y.100[[2]], yend=y.100[[2]], x = q.x[[4]], xend=q.x[[5]]), color='GREEN')
+  p2 <- p2 + geom_segment(aes(y=y.100[[3]], yend=y.100[[3]], x = q.x[[4]], xend=q.x[[5]]), color='GREEN')
+  
+  pl <- grid.arrange(p1, p2, nrow=1)
   return(pl)
 }

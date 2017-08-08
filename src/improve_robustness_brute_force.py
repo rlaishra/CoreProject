@@ -39,7 +39,7 @@ def addEdges(graph, ne, edges, vedges, id=None):
 			break
 
 		if len(edges)%1000 == 0:
-			print('Edges ')
+			print('Edges : {}'.format(len(edges)))
 	return graph, edges
 
 

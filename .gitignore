@@ -14,3 +14,9 @@ data/*
 .Rhistory
 
 *.xlsx
+
+*.sublime-project
+
+*.sublime-workspace
+
+hamster_10_error.csv

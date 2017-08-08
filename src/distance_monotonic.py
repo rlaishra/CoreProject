@@ -27,8 +27,8 @@ def main(fname, i):
 
 	for i in data:
 		d = data[i]
-		#dist.append(stats.distanceFromDecreasing(d))
-		dist.append(stats.monotonic(d))
+		dist.append(stats.distanceFromDecreasing(d))
+		#dist.append(stats.monotonic(d))
 	
 	m = np.mean(dist)
 	s = np.std(dist)
@@ -40,6 +40,8 @@ def main(fname, i):
 if __name__ == '__main__':
 	identifiers = ['p2p09_10', 'hamster_10']
 	vals = range(0, 11)
+	#identifiers = ['hamster_10']
+	#vals = range(0,4)
 
 	fpath = sys.argv[1]
 	spath = sys.argv[2]
@@ -49,6 +51,7 @@ if __name__ == '__main__':
 			sname = os.path.join(spath, i + '_error.csv')
 			header = ['edges']
 			for x in xrange(5, 100, 5):
+			#for x in xrange(5, 10, 5):
 				header += ['mean_' + str(x), 'std_' + str(x)]
 
 			data = [header]
@@ -57,6 +60,7 @@ if __name__ == '__main__':
 				print('Processing: {}'.format(fname))
 				tdata = [v]
 				for j in xrange(5,100,5):
+				#for j in xrange(5, 10, 5):
 					k = int((100 - j)/5) + 2
 
 					m, s = main(fname, k)
