@@ -24,6 +24,7 @@ def readGraph(fname):
 	else:
 		graph = nx.read_edgelist(fname)
 	graph.remove_edges_from(graph.selfloop_edges())
+	print(nx.info(graph))
 	return graph
 
 def computeMCD(graph, cnumber):
