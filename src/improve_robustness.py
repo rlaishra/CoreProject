@@ -319,7 +319,7 @@ def main(fname, sname, k, m=10):
 			t1 = time.time()
 			t.append(t1-t0)
 			print('Time: {}'.format(t[-1]))
-	print('time',t)
+	print('time', open(sname+'_time','w'))
 
 
 if __name__ == '__main__':

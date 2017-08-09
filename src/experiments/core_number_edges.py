@@ -14,15 +14,28 @@ def getGraph(fname, connected=True):
 	Returns the graph
 	If conncted is TRUE, returs the largest conncted component
 	"""
-	graph = nx.read_edgelist(fname, delimiter=',')
-	if graph.number_of_nodes() == 0:
-		graph = nx.read_edgelist(fname, delimiter='\t')
-	if graph.number_of_nodes() == 0:
-		graph = nx.read_edgelist(fname, delimiter=' ')
-	if graph.number_of_nodes() == 0:
-		return False
+	if fname.endswith('mtx'):
+		edges = []
+		with open(fname, 'r') as f:
+			reader = csv.reader(f, delimiter=' ')
+			for row in reader:
+				if len(row) == 2:
+					edges.append(row)
+		graph = nx.Graph()
+		graph.add_edges_from(edges)
+	else:
+		graph = nx.read_edgelist(fname, delimiter=',')
+		if graph.number_of_nodes() == 0:
+			graph = nx.read_edgelist(fname, delimiter='\t')
+		if graph.number_of_nodes() == 0:
+			graph = nx.read_edgelist(fname, delimiter=' ')
+		if graph.number_of_nodes() == 0:
+			return False
+
 	graph = max(nx.connected_component_subgraphs(graph), key=len)
 	graph.remove_edges_from(graph.selfloop_edges())
+	print(nx.info(graph))
+	
 	return graph
 
 
@@ -76,7 +89,7 @@ def saveData(sname, data):
 			writer.writerow(d)
 
 if __name__ == '__main__':
-	p_max = 25
+	p_max = 5
 	i_max = 100
 
 	fname = sys.argv[1]

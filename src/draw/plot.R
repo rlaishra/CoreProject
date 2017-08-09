@@ -268,10 +268,11 @@ plotRobustness <- function(fname) {
 
 deltaCoreDistribution <- function(fname, removed) {
   dat <- read.csv(fname, header = TRUE, sep = ',')
-  mc <- median(dat$core)
-  dat <- dat[which(dat$core > mc & dat$removed == removed),]
-  dat$bins <- cut(dat$core, breaks = 2, labels = 0:1)
-  dat$delta_core <- dat$delta_core * dat$core
+  #mc <- median(dat$core)
+  mc <- 0
+  dat <- dat[which(dat$core > mc & dat$removed %in% removed),]
+  dat$bins <- cut(dat$core, unique(quantile(dat$core)), include.lowest = TRUE)
+  #dat$delta_core <- dat$delta_core * dat$core
   q.y <- quantile(dat$delta_core, c(0,0.25, 0.5, 0.75,1))
   q.x <- quantile(dat$rcd, c(0,0.25,0.50,0.75,1))
   
@@ -296,11 +297,11 @@ deltaCoreDistribution <- function(fname, removed) {
   # print(mean(dat[which(dat$rcd > q.x[[4]] & dat$rcd < q.x[[5]]),]$delta_core))
   
   p1 <- ggplot(data=dat)
-  p1 <- p1 + geom_bin2d(aes(x=rcd, y=delta_core), bins=30)
-  p1 <- p1 + geom_hline(yintercept = q.y[2:4], color='RED')
+  p1 <- p1 + geom_bin2d(aes(x=rcd, y=delta_core), bins=10)
+  #p1 <- p1 + geom_hline(yintercept = q.y[2:4], color='RED')
   # p1 <- p1 + geom_vline(xintercept = q.x[2:4], color='RED')
-  # p1 <- p1 + facet_grid(. ~ bins)
-  # return(p1)
+  p1 <- p1 + facet_grid(removed ~ bins)
+  return(p1)
   
   p1 <- p1 + geom_linerange(x=x.25[[1]], ymin=q.y[[1]], ymax=q.y[[2]], color='GREEN')
   p1 <- p1 + geom_linerange(x=x.25[[2]], ymin=q.y[[1]], ymax=q.y[[2]], color='GREEN')
@@ -340,5 +341,29 @@ deltaCoreDistribution <- function(fname, removed) {
   p2 <- p2 + geom_segment(aes(y=y.100[[3]], yend=y.100[[3]], x = q.x[[4]], xend=q.x[[5]]), color='GREEN')
   
   pl <- grid.arrange(p1, p2, nrow=1)
+  return(pl)
+}
+
+rcdDegreeDistribution <- function(fname) {
+  dat <- read.csv(fname, header = TRUE, sep = ',')
+  dat <- dat[which(dat$removed == 1),]
+  dat$bins <- cut(dat$core, unique(quantile(dat$core)), include.lowest = TRUE)
+  
+  pl <- ggplot(data = dat)
+  pl <- pl + geom_histogram(aes(x=rcd), bins=30)
+  pl <- pl + scale_y_log10()
+  pl <- pl + facet_grid(. ~ bins)
+  
+  return(pl)
+}
+
+coreRcdDistribition <- function(fname) {
+  dat <- read.csv(fname, header = TRUE, sep = ',')
+  dat <- dat[which(dat$removed == 1),]
+  #dat$bins <- cut(dat$core, unique(quantile(dat$core)), include.lowest = TRUE)
+  
+  pl <- ggplot(data = dat)
+  pl <- pl + geom_bin2d(aes(x=core, y=rcd), bins=10)
+  
   return(pl)
 }
