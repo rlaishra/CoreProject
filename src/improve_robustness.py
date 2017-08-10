@@ -64,7 +64,7 @@ def findPureCore(graph, cnumber, mcd, u):
 	nodes = [v for v in cnumber if cnumber[v] == cnumber[u]]
 
 	# MCD condition
-	nodes = [v for v in cnumber if mcd[v] > cnumber[u]]
+	nodes = [v for v in nodes if mcd[v] > cnumber[u]]
 	
 	# Reachability condition
 	nodes.append(u) 				# u inserted to check for reachabilty
