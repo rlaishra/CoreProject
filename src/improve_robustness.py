@@ -27,9 +27,11 @@ def readGraph(fname):
 	print(nx.info(graph))
 	return graph
 
-def computeMCD(graph, cnumber):
+def computeMCD(graph, cnumber, nodes=None):
 	mcd = {}
-	for u in graph.nodes():
+	if nodes is None:
+		nodes = graph.nodes()
+	for u in nodes:
 		mcd[u] = 0
 		n = graph.neighbors(u)
 		for v in n:
@@ -62,7 +64,7 @@ def findPureCore(graph, cnumber, mcd, u):
 	nodes = [v for v in cnumber if cnumber[v] == cnumber[u]]
 
 	# MCD condition
-	nodes = [v for v in nodes if mcd[v] > cnumber[u]]
+	nodes = [v for v in cnumber if mcd[v] > cnumber[u]]
 	
 	# Reachability condition
 	nodes.append(u) 				# u inserted to check for reachabilty
@@ -76,18 +78,24 @@ def findPureCore(graph, cnumber, mcd, u):
 	return set([])
 
 
-def generatePureCore(graph, cnumber, mcd):
+def generatePureCore(graph, cnumber, mcd, nodes=None):
 	pc = {}
 
-	for u in graph.nodes():
+	if nodes is None:
+		nodes = graph.nodes()
+
+	for u in nodes:
 		pc[u] = findPureCore(graph, cnumber, mcd, u)
 	
 	return pc
 
-def getRCD(graph, cnumber):
+def getRCD(graph, cnumber, nodes=None):
 	data = {}
 
-	for u in graph.nodes():
+	if nodes is None:
+		nodes = graph.nodes()
+
+	for u in nodes:
 		if cnumber[u] == 0:
 			data[u] = np.inf
 			continue
@@ -268,15 +276,18 @@ def main(fname, sname, k, m=10):
 
 	graph = readGraph(fname)
 	cnumber = nx.core_number(graph)
-	mcd = computeMCD(graph, cnumber)
-	pc = generatePureCore(graph, cnumber, mcd)
-	rcd = getRCD(graph, cnumber)
-	
-	#pc_size = [len(pc[u]) for u in pc]
 
 	cvals = cnumber.values()
 	cutoff = sorted(cvals, reverse=True)[int(len(cnumber)*k/100)]
 	step = int(graph.number_of_edges()/100)
+
+	nodes = [u for u in cnumber if cnumber[u] > cutoff]
+
+	mcd = computeMCD(graph, cnumber, nodes)
+	pc = generatePureCore(graph, cnumber, mcd, nodes)
+	rcd = getRCD(graph, cnumber, nodes)
+	
+	#pc_size = [len(pc[u]) for u in pc]
 	
 	print(nx.info(graph))
 	print('Max core: {} \t Cut off: {}'.format(max(cvals), cutoff))
