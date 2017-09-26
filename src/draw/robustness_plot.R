@@ -1,5 +1,6 @@
 library('ggplot2')
 require(gridExtra)
+library(latex2exp)
 
 robustnessPK <- function(fname, name, n) {
   data <- read.csv(fname, header = TRUE, sep = ',')

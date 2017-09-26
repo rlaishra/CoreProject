@@ -1,6 +1,8 @@
 from __future__ import division, print_function
 import networkx as nx
 import numpy as np
+from scipy.sparse import csr_matrix
+from scipy import sparse
 import sys
 import time
 import csv
@@ -21,18 +23,17 @@ def readGraph(fname):
 	print(nx.info(graph))
 	return graph
 
-def kcoreMat(mat):
-	s = np.matrix([1]*len(mat))
+def kcoreMat(mat, l):
+	s = np.matrix([1]*l)
 	s = np.transpose(s)
 	k = 0
 
 	cnumber = {}
-	candidates = range(0, len(mat))
+	candidates = range(0, l)
 	plen = len(candidates)
 
 	while len(candidates) > 0:
-		r = np.matmul(mat, s)
-		remove = []
+		r = mat.dot(s)
 		for u in candidates:
 			if r[u,0] == k or (s[u,0] > 0 and r[u,0] < k):
 				cnumber[u] = k
@@ -42,20 +43,18 @@ def kcoreMat(mat):
 		if len(candidates) == plen:
 			k += 1
 		plen = len(candidates)
-			
+		
 	return cnumber
 
 def kcore(graph):
 	g = graph.copy()
 	cnumber = {u:0 for u in g.nodes()}
-	#candidates = list(graph.nodes())
 	k = 0
 	while g.number_of_nodes() > 0:
 		changed = False
-		degree = g.degree()
 		for u in g.nodes():
 			cnumber[u] = k
-			if degree[u] <= k:
+			if len(g.neighbors(u)) <= k:
 				g.remove_node(u)
 				changed = True
 		if not changed:
@@ -65,9 +64,6 @@ def kcore(graph):
 
 def checkCoreChangeMat(mat1, mat2, u, v, cnumber):
 	kmin = min(cnumber[u], cnumber[v])
-	#print('K min: {}'.format(kmin))
-	#m1 = np.copy(mat)
-	#m2 = np.copy(mat)
 
 	m1 = mat1
 	m2 = mat2
@@ -77,10 +73,10 @@ def checkCoreChangeMat(mat1, mat2, u, v, cnumber):
 
 	for i in xrange(len(mat)-1, 0):
 		if cnumber(i) < kmin:
-			np.delete(m1, i, 0)
-			np.delete(m1, i, 1)
-			np.delete(m2, i, 0)
-			np.delete(m2, i, 1)
+			m1 = np.delete(m1, i, 0)
+			m1 = np.delete(m1, i, 1)
+			m2 = np.delete(m2, i, 0)
+			m2 = np.delete(m2, i, 1)
 
 	s1 = np.matrix([1]*len(m1))
 	s1 = np.transpose(s1)
@@ -95,56 +91,42 @@ def checkCoreChangeMat(mat1, mat2, u, v, cnumber):
 	can1 = range(0, len(m1))
 	can2 = list(can1)
 
-	while k1 <= kmax or k2  <= kmax:
-	#while len(can1) > 0 or len(can2) > 0 :
-		#pass
+	m1 = sparse.csr_matrix(m1)
+	m2 = sparse.csr_matrix(m2)
+
+	while k1 < kmax or k2  < kmax:
 		changed1 = False
 		changed2 = False
 
-		r1 = np.matmul(m1, s1)
-		r2 = np.matmul(m2, s2)
-		#r1 = m1 * s1
-		#r2 = m2 * s2
-		#print(np.transpose(r1))
-		#print(np.transpose(r2))
+		r1 = m1.dot(s1)
+		r2 = m2.dot(s2)
+		
 		if (r1 == r2).all():
-			#print(1, k1, k2)
 			return True
-		if k1 <= kmax:
+		if k1 < kmax:
 			for w in can1:
 				if r1[w,0] == k1 or (s1[w,0] > 0 and r1[w,0] < k1):
 					c1[w] = k1
 					if w in c2 and c2[w] != c1[w]:
-						#print(3)
 						return False
 					s1[w, 0] = 0
 					can1.remove(w)
 					changed1 = True
-		if k2 <= kmax:
+		if k2 < kmax:
 			for w in can2:
 				if r2[w,0] == k2 or (s2[w,0] > 0 and r2[w,0] < k2):
 					c2[w] = k2
 					if w in c1 and c2[w] != c1[w]:
-						#print(3)
 						return False
 					s2[w, 0] = 0
 					can2.remove(w)
 					changed2 = True
-
 		if not changed1:
 			k1 += 1
 		if not changed2:
 			k2 += 1
-		#print(len(can1), len(can2))
 
-	#print(c1)
-	#print(c2)
-	#c1 = np.array([c1[w] for w in c1])
-	#c2 = np.array([c2[w] for w in c2])
-	#print(c1)
-	#print(c2)
 	if np.array_equal(np.array(c1.values()), np.array(c2.values())):
-		#print(2)
 		return True
 	return False
 		
@@ -152,6 +134,7 @@ def checkCoreChangeMat(mat1, mat2, u, v, cnumber):
 
 def checkCoreChange(graph, u, v, cnumber):
 	g = graph.copy()
+	#cnumber = kcore(g)
 	kmin = min(cnumber[u], cnumber[v])
 
 	for w in g.nodes():
@@ -162,14 +145,13 @@ def checkCoreChange(graph, u, v, cnumber):
 	g.add_edge(u,v)
 	c2 = kcore(g)
 	
-	for w in c1:
-		if c1[w] != c2[w]:
-			#print(w)
-			return False
+	c1 = np.array(c1.values())
+	c2 = np.array(c2.values())
 
-	g.remove_edge(u,v)
+	if np.array_equal(c1, c2):
+		return True
 
-	return True
+	return False
 
 def checkCoreChangeBaseline(graph, u, v):
 	c1 = nx.core_number(graph)
@@ -234,15 +216,20 @@ if __name__ == '__main__':
 	#nodes = {i:nodes[i] for i in xrange(0, len(nodes))}
 	#cnumber = {i:0 for i in nodes}
 
-	t1 = time.time()
-	cnumber = kcoreMat(mat)
-	t2 = time.time()
-	print('Time Mat: {}'.format(t2-t1))
+	m = sparse.csr_matrix(mat)
+	t = []
+	for _ in xrange(0, 100):
+		t1 = time.time()
+		cnumber = kcoreMat(m, len(mat))
+		t.append(time.time() - t1)
+	print('Time Mat: {} {}'.format(np.mean(t), np.std(t)))
 
-	t1 = time.time()
-	dnumber = kcore(nx.from_numpy_matrix(mat))
-	t2 = time.time()
-	print('Time Nx: {}'.format(t2-t1))
+	t = []
+	for _ in xrange(0, 100):
+		t1 = time.time()
+		dnumber = kcore(nx.from_numpy_matrix(mat))
+		t.append(time.time() - t1)
+	print('Time Nor: {} {}'.format(np.mean(t), np.std(t)))
 
 	core_ground = nx.core_number(nx.from_numpy_matrix(mat))
 	
@@ -252,9 +239,12 @@ if __name__ == '__main__':
 	checkCorrectness(cnumber, core_ground)
 	checkCorrectness(dnumber, core_ground)
 
-	edges = [(u,v) for u in xrange(0, len(mat)) for v in xrange(0, len(mat)) if not graph.has_edge(u,v) and u != v]
+	n1 = np.random.randint(0, len(mat), size=min(len(mat), 200))
+	n2 = np.random.randint(0, len(mat), size=min(len(mat), 200))
+	edges = [(u,v) for u in n1 for v in n2 if not graph.has_edge(u,v) and u != v]
 	np.random.shuffle(edges)
-	edges = edges[:5]
+	edges = edges[:100]
+	print('Edges selected')
 
 	t = []
 	mresults = []
@@ -278,17 +268,15 @@ if __name__ == '__main__':
 
 	print(np.mean(t), np.std(t))
 
-	baseline = []
-	for e in edges:
-		t1 = time.time()
-		r = checkCoreChangeBaseline(nx.from_numpy_matrix(mat), e[0], e[1])
-		t.append(time.time() - t1)
-		baseline.append(r)
 
-	print(np.mean(t), np.std(t))
+	#baseline = []
+	#for e in edges:
+	#	r = checkCoreChangeBaseline(nx.from_numpy_matrix(mat), e[0], e[1])
+	#	baseline.append(r)
+
 	#print(edges)
 	#print(mresults)
 	#print(kresults)
 	#print(baseline)
 
-	performance(mresults, baseline)
+	#performance(mresults, baseline)
