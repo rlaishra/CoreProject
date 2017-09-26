@@ -14,7 +14,7 @@ def readGraph(fname):
 	graph.remove_edges_from(graph.selfloop_edges())
 	return graph
 
-def addEdges(graph, ne, edges, vedges, id=None):
+def addEdges(graph, ne, edges, id=None):
 	cn =nx.core_number(graph)
 	core = np.array(cn.values())
 
@@ -29,11 +29,10 @@ def addEdges(graph, ne, edges, vedges, id=None):
 
 		diff = np.linalg.norm(core - tcore)
 
-		if diff > 0:
+		if diff != 0:
 			graph.remove_edge(e[0], e[1])
 		else:
 			i += 1
-			#print(id, i, e[0], e[1], cn[e[0]], cn[e[1]], vedges[e])
 
 		if i >= ne:
 			break
@@ -43,19 +42,21 @@ def addEdges(graph, ne, edges, vedges, id=None):
 	return graph, edges
 
 
-def possibleEdges(graph):
+def possibleEdges(graph, k):
 	core = nx.core_number(graph)
-	nodes = set(graph.nodes())
+	th = sorted(core.values())[int(len(core) * k / 100)]
+	nodes = graph.nodes()
+	nodes = set([u for u in nodes if core[u] >= th])
 
-	vedges = {}
+	edges = []
 	while len(nodes) > 2:
 		u = nodes.pop()
 		n = nodes.difference(graph.neighbors(u))
 		for v in n:
-			vedges[(u,v)] = core[u]*core[v]
-	edges = sorted(vedges, key=vedges.get, reverse=True)
+			edges.append([u, v])
+	random.shuffle(edges)
 
-	return edges, vedges
+	return edges
 
 if __name__ == '__main__':
 	fname = sys.argv[1]
@@ -67,7 +68,7 @@ if __name__ == '__main__':
 	nedges = xrange(1,11)
 
 	graph = readGraph(fname)
-	edges, vedges = possibleEdges(graph)
+	edges = possibleEdges(graph, 25)
 	count = graph.number_of_edges()/100
 
 	tsname = sname + '0.csv'
@@ -81,7 +82,7 @@ if __name__ == '__main__':
 		tsname = sname + str(e) + '.csv'
 		#graph = readGraph(fname)
 		print(nx.info(graph))
-		graph, edges = addEdges(graph, ne, edges, vedges, e)
+		graph, edges = addEdges(graph, ne, edges, e)
 		print(nx.info(graph))
 		nx.write_edgelist(graph, tsname)
 		

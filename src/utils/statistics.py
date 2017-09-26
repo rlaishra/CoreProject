@@ -4,6 +4,7 @@ import networkx as nx
 import sys
 import csv
 from pprint import pprint
+import scipy.stats
 
 class Statistics(object):
 	"""docstring for Statistics."""
@@ -61,17 +62,28 @@ class Statistics(object):
 					  + [d[i]])
 		return max(l, key=len)
 
-	def distanceFromDecreasing(self, x):
+	def distanceFromDecreasing(self, x, n=None):
 		"""
 		Returns the total value to be subtracted to make the sequence decreasing
 		"""
 		#print(x)
+		
 		x = [i if not np.isnan(i) else 1 for i in x]
+		#y = [round(i,2) for i in x]
+		#print(y)
+		if n is None:
+			n = len(x)
+
 		#x = [0.5 * (i + 1) for i in x]
 		#print(x)
 
 		error = []
 		ss = self.longest_decreasing_subsequence(x)
+		y = [round(i,2) for i in ss]
+		#print(y)
+		#print(len(ss))
+		if len(ss) < 2:
+			return 0
 		sel = [None for _ in xrange(0, len(x))]
 
 		j = 0
@@ -89,7 +101,8 @@ class Statistics(object):
 				if x[i] != 0 :
 					#print(np.abs(x[i]-u))
 					#print(np.abs(x[i]-v))
-					e = min(np.abs(x[i]-u), np.abs(x[i]-v))
+					e = max(np.abs(x[i]-u), np.abs(x[i]-v))
+					#print(e)
 					#e = np.abs(e/x[i])
 					error.append(e*e)
 					#error.append(e)
@@ -104,19 +117,19 @@ class Statistics(object):
 		#print(error)
 		if len(error) == 0:
 			return 0
-		#return np.mean(error)
-		return np.sqrt(np.sum(error)/len(error))
-
-		while not self._isDecreasing(x):
-			for i in xrange(1, len(x)):
-				if x[i-1] < x[i]:
-					error.append(x[i] - x[i-1])
-					x[i] = x[i-1]
-
-		return np.sum(error)/len(error)
+		#return np.sum(error)/n
+		#print(max(error))
+		return np.sqrt(np.sum(error)/n)
+		#return np.sqrt(np.sum(error)/len(error))
 
 
-	def monotonic(self, x):
+	def monotonic(self, y):
+		x = range(0, len(y))
+
+		r, p = scipy.stats.spearmanr(x, y)
+
+		return r
+
 		#slope = -1 if np.polyfit(range(0, len(x)), x, 1)[0] < 0 else 1
 		#print(slope)
 		change = []
@@ -177,6 +190,11 @@ class Statistics(object):
 				count += 1
 		return change
 
+	def linearRegression(self, y):
+		x = range(0, len(y))
+		slope, intercept, r_value, p_value, std_err = scipy.stats.linregress(x, y)
+		return slope, r_value
+
 if __name__ == '__main__':
 	stats = Statistics()
 
@@ -204,19 +222,41 @@ if __name__ == '__main__':
 	"""
 
 	fname = sys.argv[1]
-	cdata = []
-	with open(fname, 'r') as f:
-		reader = csv.reader(f, delimiter=',')
-		for r in reader:
-			cdata.append(r)
+	sname = sys.argv[2]
+	ident = sys.argv[3]
+	#index = int(sys.argv[2])
 
-	data = [[],[],[],[],[]]
-	for d in cdata[1:]:
-		data[0].append(float(d[1]))
-		data[1].append(float(d[3]))
-		data[2].append(float(d[5]))
-		data[3].append(float(d[7]))
-		#data[4].append(float(d[9]))
+	data = []
+
+	for index in xrange(-1,-21,-1):
+		print(index)
+
+		cdata = {}
+		rd = [0,0]
+		with open(fname, 'r') as f:
+			reader = csv.reader(f, delimiter=',')
+			header = next(reader)
+			print('Data: {}'.format(header[index]))
+
+			for r in reader:
+				if r[0] not in cdata:
+					cdata[r[0]] = []
+				cdata[r[0]].append(float(r[index]))
+				rd[0] = min(rd[0], float(r[1]))
+				rd[1] = max(rd[0], float(r[1]))
+
+		
+		e = []
+		for i in cdata:
+			d = stats.distanceFromDecreasing(cdata[i], (rd[1] - rd[0]))
+			e.append(d)
+
+		data.append([-5*index, np.mean(e), np.std(e), ident])
+
+	with open(sname, 'a') as f:
+		writer = csv.writer(f, delimiter=',')
+		for d in data:
+			writer.writerow(d)
 
 	#change1 = stats.monotonic(data[0])
 	#change2 = stats.monotonic(data[1])
@@ -224,6 +264,6 @@ if __name__ == '__main__':
 	#change4 = stats.monotonic(data[3])
 	#change5 = stats.monotonic(data[4])
 
-	print(stats.distanceFromDecreasing(data[3]))
+	#print(stats.distanceFromDecreasing(data[3]))
 
 	#print(change1, change2, change3, change4)

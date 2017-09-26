@@ -203,7 +203,7 @@ compareRobustness <- function(fname) {
   fname7 <- paste(fname, '_7_core_mean_edges_delete_random.csv', sep = '')
   fname8 <- paste(fname, '_8_core_mean_edges_delete_random.csv', sep = '')
   fname9 <- paste(fname, '_9_core_mean_edges_delete_random.csv', sep = '')
-  fname10 <- paste(fname, '_10_core_mean_edges_delete_random.csv', sep = '')
+  # fname10 <- paste(fname, '_10_core_mean_edges_delete_random.csv', sep = '')
   
   d0 <- read.csv(fname0, header = TRUE, sep = ',')
   d1 <- read.csv(fname1, header = TRUE, sep = ',')
@@ -215,21 +215,21 @@ compareRobustness <- function(fname) {
   d7 <- read.csv(fname7, header = TRUE, sep = ',')
   d8 <- read.csv(fname8, header = TRUE, sep = ',')
   d9 <- read.csv(fname9, header = TRUE, sep = ',')
-  d10 <- read.csv(fname10, header = TRUE, sep = ',')
+  # d10 <- read.csv(fname10, header = TRUE, sep = ',')
   
   pl <- ggplot()
   
-  pl <- pl + geom_line(data = d0, aes(x=change, y=correlation_mean_15, color='00'))
-  pl <- pl + geom_line(data = d1, aes(x=change, y=correlation_mean_15, color='01'))
-  pl <- pl + geom_line(data = d2, aes(x=change, y=correlation_mean_15, color='02'))
-  pl <- pl + geom_line(data = d3, aes(x=change, y=correlation_mean_15, color='03'))
-  pl <- pl + geom_line(data = d4, aes(x=change, y=correlation_mean_15, color='04'))
-  pl <- pl + geom_line(data = d5, aes(x=change, y=correlation_mean_15, color='05'))
-  pl <- pl + geom_line(data = d6, aes(x=change, y=correlation_mean_15, color='06'))
-  pl <- pl + geom_line(data = d7, aes(x=change, y=correlation_mean_15, color='07'))
-  pl <- pl + geom_line(data = d8, aes(x=change, y=correlation_mean_15, color='08'))
-  pl <- pl + geom_line(data = d9, aes(x=change, y=correlation_mean_15, color='09'))
-  pl <- pl + geom_line(data = d10, aes(x=change, y=correlation_mean_15, color='10'))
+  pl <- pl + geom_line(data = d0, aes(x=change, y=correlation_mean_35, color='00'))
+  pl <- pl + geom_line(data = d1, aes(x=change, y=correlation_mean_35, color='01'))
+  pl <- pl + geom_line(data = d2, aes(x=change, y=correlation_mean_35, color='02'))
+  pl <- pl + geom_line(data = d3, aes(x=change, y=correlation_mean_35, color='03'))
+  pl <- pl + geom_line(data = d4, aes(x=change, y=correlation_mean_35, color='04'))
+  pl <- pl + geom_line(data = d5, aes(x=change, y=correlation_mean_35, color='05'))
+  pl <- pl + geom_line(data = d6, aes(x=change, y=correlation_mean_35, color='06'))
+  pl <- pl + geom_line(data = d7, aes(x=change, y=correlation_mean_35, color='07'))
+  pl <- pl + geom_line(data = d8, aes(x=change, y=correlation_mean_35, color='08'))
+  pl <- pl + geom_line(data = d9, aes(x=change, y=correlation_mean_35, color='09'))
+  # pl <- pl + geom_line(data = d10, aes(x=change, y=correlation_mean_15, color='10'))
   
   pl <- pl + geom_ribbon(data = d0, aes(x=change, ymin=correlation_mean_15 - correlation_std_15, ymax=correlation_mean_15 + correlation_std_15, fill='00'), alpha=0.1)
   pl <- pl + geom_ribbon(data = d1, aes(x=change, ymin=correlation_mean_15 - correlation_std_15, ymax=correlation_mean_15 + correlation_std_15, fill='01'), alpha=0.1)
@@ -241,7 +241,7 @@ compareRobustness <- function(fname) {
   pl <- pl + geom_ribbon(data = d7, aes(x=change, ymin=correlation_mean_15 - correlation_std_15, ymax=correlation_mean_15 + correlation_std_15, fill='07'), alpha=0.1)
   pl <- pl + geom_ribbon(data = d8, aes(x=change, ymin=correlation_mean_15 - correlation_std_15, ymax=correlation_mean_15 + correlation_std_15, fill='08'), alpha=0.1)
   pl <- pl + geom_ribbon(data = d9, aes(x=change, ymin=correlation_mean_15 - correlation_std_15, ymax=correlation_mean_15 + correlation_std_15, fill='09'), alpha=0.1)
-  pl <- pl + geom_ribbon(data = d10, aes(x=change, ymin=correlation_mean_15 - correlation_std_15, ymax=correlation_mean_15 + correlation_std_15, fill='10'), alpha=0.1)
+  # pl <- pl + geom_ribbon(data = d10, aes(x=change, ymin=correlation_mean_15 - correlation_std_15, ymax=correlation_mean_15 + correlation_std_15, fill='10'), alpha=0.1)
   
   
   return(pl)
@@ -297,10 +297,11 @@ deltaCoreDistribution <- function(fname, removed) {
   # print(mean(dat[which(dat$rcd > q.x[[4]] & dat$rcd < q.x[[5]]),]$delta_core))
   
   p1 <- ggplot(data=dat)
-  p1 <- p1 + geom_bin2d(aes(x=rcd, y=delta_core), bins=10)
+  p1 <- p1 + geom_bin2d(aes(x=core, y=delta_core), bins=10)
   #p1 <- p1 + geom_hline(yintercept = q.y[2:4], color='RED')
   # p1 <- p1 + geom_vline(xintercept = q.x[2:4], color='RED')
-  p1 <- p1 + facet_grid(removed ~ bins)
+  # p1 <- p1 + facet_grid(removed ~ bins)
+  p1 <- p1 + facet_grid(removed ~ .)
   return(p1)
   
   p1 <- p1 + geom_linerange(x=x.25[[1]], ymin=q.y[[1]], ymax=q.y[[2]], color='GREEN')
@@ -364,6 +365,45 @@ coreRcdDistribition <- function(fname) {
   
   pl <- ggplot(data = dat)
   pl <- pl + geom_bin2d(aes(x=core, y=rcd), bins=10)
+  
+  return(pl)
+}
+
+drawRobustnessComparison <- function(fname, nodes) {
+  dat <- read.csv(fname, header = TRUE, sep = ',')
+  dat <- dat[which(dat$nodes %in% nodes),]
+  
+  pl <- ggplot(data = dat)
+  pl <- pl + geom_line(aes(x = change, y = mean, color = factor(added), group=added))
+  pl <- pl + geom_ribbon(aes(x = change, ymin= mean - std, ymax = mean + std, fill=factor(added), group=added), alpha=0.1)
+  
+  pl <- pl + facet_grid(nodes ~ .)
+  
+  return(pl)
+}
+
+drawRobustnessError <- function(fname, nodes) {
+  dat <- read.csv(fname, header = TRUE, sep = ',')
+  dat <- dat[which(dat$nodes %in% nodes),]
+  
+  pl <- ggplot(data = dat)
+  pl <- pl + geom_line(aes(x = added, y = dist_mean, color = factor(nodes) ,group=nodes))
+  pl <- pl + geom_ribbon(aes(x = added, ymin= dist_mean - dist_std, ymax = dist_mean + dist_std, fill=factor(nodes)), alpha=0.1)
+  pl <- pl + scale_y_log10()
+  # pl <- pl + facet_grid(nodes ~ .)
+  
+  return(pl)
+}
+
+drawRobustnessSlope <- function(fname, nodes) {
+  dat <- read.csv(fname, header = TRUE, sep = ',')
+  dat <- dat[which(dat$nodes %in% nodes),]
+  
+  pl <- ggplot(data = dat)
+  pl <- pl + geom_line(aes(x = added, y = slope_mean, color = factor(nodes) ,group=nodes))
+  pl <- pl + geom_ribbon(aes(x = added, ymin= slope_mean - slope_std, ymax = slope_mean + slope_std, fill=factor(nodes)), alpha=0.1)
+  # pl <- pl + scale_y_log10()
+  #pl <- pl + facet_grid(nodes ~ .)
   
   return(pl)
 }

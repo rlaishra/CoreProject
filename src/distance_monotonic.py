@@ -24,22 +24,36 @@ def main(fname, i):
 	stats = st.Statistics()
 
 	dist = []
+	slope = []
+	corr = []
 
 	for i in data:
 		d = data[i]
 		dist.append(stats.distanceFromDecreasing(d))
 		#dist.append(stats.monotonic(d))
+		s, c = stats.linearRegression(d)
+		slope.append(s)
+		corr.append(c)
 	
-	m = np.mean(dist)
-	s = np.std(dist)
+	m = {}
+	s = {}
 
-	print('Distance Mean: {} \t Std: {}'.format(m,s))
+	m['dist'] = np.mean(dist)
+	m['slope'] = np.mean(slope)
+	m['corr'] = np.mean(corr)
+
+	s['dist'] = np.std(dist)
+	s['slope'] = np.mean(slope)
+	s['corr'] = np.std(corr)
+
+	print(m)
+	print(s)
 
 	return m, s
 
 if __name__ == '__main__':
-	identifiers = ['p2p09_10', 'hamster_10']
-	vals = range(0, 11)
+	identifiers = ['p2p_09_10', 'hamster_10', 'grqc_10', 'p2p_09_25', 'hamster_25', 'grqc_25']
+	vals = range(0, 10)
 	#identifiers = ['hamster_10']
 	#vals = range(0,4)
 
@@ -49,23 +63,23 @@ if __name__ == '__main__':
 	if os.path.exists(fpath) and os.path.exists(spath):
 		for i in identifiers:
 			sname = os.path.join(spath, i + '_error.csv')
-			header = ['edges']
-			for x in xrange(5, 100, 5):
+			header = ['added', 'dist_mean', 'dist_std', 'slope_mean', 'slope_std', 'corr_mean', 'corr_std', 'nodes']
+			#for x in xrange(5, 100, 5):
 			#for x in xrange(5, 10, 5):
-				header += ['mean_' + str(x), 'std_' + str(x)]
+			#	header += ['mean_' + str(x), 'std_' + str(x)]
 
 			data = [header]
 			for v in vals:
 				fname = os.path.join(fpath, i + '_' + str(v) + '_core_edges_delete_random.results')
 				print('Processing: {}'.format(fname))
-				tdata = [v]
+				#tdata = [v]
 				for j in xrange(5,100,5):
-				#for j in xrange(5, 10, 5):
 					k = int((100 - j)/5) + 2
 
 					m, s = main(fname, k)
-					tdata += [m,s]
-				data.append(tdata)
+					#tdata += [m,s]
+					data.append([v, m['dist'], s['dist'], m['slope'], s['slope'], m['corr'], s['corr'], j])
+				#data.append(tdata)
 		
 			with open(sname, 'w') as f:
 				writer = csv.writer(f, delimiter=',')
