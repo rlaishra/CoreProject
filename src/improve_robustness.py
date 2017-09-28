@@ -10,6 +10,8 @@ import os
 import cPickle as pickle
 import time
 import csv
+from scipy.sparse import csr_matrix
+from scipy import sparse
 
 def readGraph(fname):
 	if fname.endswith('mtx'):
@@ -137,17 +139,17 @@ def _getSupportNodes(graph, cnumber, u):
 
 
 
-def getCoreInfluence(cnumber, kcore, nodes=None, changed=None):
+def getCoreInfluence(cnumber, kcore, nodes=None):
 	"""
 	Compute the influence score for each nodes
 	"""
 	if nodes is None:
 		nodes = cnumber.keys()
 
-	if changed is None:
-		changed = nodes
+	#if changed is None:
+	#	changed = nodes
 
-	knumber = [cnumber[u] for u in nodes if u in changed]
+	knumber = [cnumber[u] for u in nodes]
 	kmin = min(knumber)
 	kmax = min(knumber)
 
@@ -256,6 +258,79 @@ def updatePureCore(graph, cnumber, mcd, pc, e, candidates):
 	return pc, set(changed)
 
 
+def checkCoreChange(graph_matrix, u, v, cnumber):
+	"""
+	Returns true if core number do not change
+	False if core number will change
+	"""
+	kmin = min(cnumber[u], cnumber[v])
+
+	m1 = np.copy(graph_matrix)
+	m2 = np.copy(graph_matrix)
+
+	m2[u,v] = 1
+	m2[v,u] = 1
+
+	for i in xrange(len(m1)-1, 0):
+		if cnumber(i) < kmin:
+			m1 = np.delete(m1, i, 0)
+			m1 = np.delete(m1, i, 1)
+			m2 = np.delete(m2, i, 0)
+			m2 = np.delete(m2, i, 1)
+
+	s1 = np.matrix([1]*len(m1))
+	s1 = np.transpose(s1)
+	s2 = np.copy(s1)
+	
+	c1 = {}
+	c2 = {}
+	k1 = kmin
+	k2 = kmin
+	kmax = kmin + 1
+
+	can1 = range(0, len(m1))
+	can2 = list(can1)
+
+	m1 = sparse.csr_matrix(m1)
+	m2 = sparse.csr_matrix(m2)
+
+	while k1 < kmax or k2  < kmax:
+		changed1 = False
+		changed2 = False
+
+		r1 = m1.dot(s1)
+		r2 = m2.dot(s2)
+		
+		if (r1 == r2).all():
+			return True
+		if k1 < kmax:
+			for w in can1:
+				if r1[w,0] == k1 or (s1[w,0] > 0 and r1[w,0] < k1):
+					c1[w] = k1
+					if w in c2 and c2[w] != c1[w]:
+						return False
+					s1[w, 0] = 0
+					can1.remove(w)
+					changed1 = True
+		if k2 < kmax:
+			for w in can2:
+				if r2[w,0] == k2 or (s2[w,0] > 0 and r2[w,0] < k2):
+					c2[w] = k2
+					if w in c1 and c2[w] != c1[w]:
+						return False
+					s2[w, 0] = 0
+					can2.remove(w)
+					changed2 = True
+		if not changed1:
+			k1 += 1
+		if not changed2:
+			k2 += 1
+
+	if np.array_equal(np.array(c1.values()), np.array(c2.values())):
+		return True
+	return False
+
+
 def _checkIfCoreNumberChange(graph, carray, u, v):
 	"""
 	Add edge and check if core number change
@@ -280,27 +355,24 @@ def _checkIfCoreNumberChange(graph, carray, u, v):
 	return False
 
 
-def pruneCandidateEdges(graph, oedges, nedges, cnumber, pc, changed=None, size=None, carray=None, kcore=None, cutoff=0):
+def pruneCandidateEdges(graph, oedges, nedges, cnumber, size=None, cutoff=0, mat=None):
 	"""
 	Remove the edges which will change core number
 	"""
-	if changed is None:
-		changed = set(pc.keys())
+	#if changed is None:
+	#	changed = set(cnumber.keys())
 
 	if size is None:
 		size = len(oedges)
 
-	if len(changed) == 0 and len(nedges) > 0.5 * size:
-		return oedges, nedges
-	#print('edges', len(oedges), len(nedges))
+	#if len(changed) == 0 and len(nedges) > 0.5 * size:
+	#	return oedges, nedges
 
-	if kcore is None:
-		kcore = generateCoreSubgraph(graph, cnumber)
-
-	if carray is None:
-		carray = generateCoreNumber(kcore)
+	if mat is None:
+		mat = nx.to_numpy_matrix(graph)
+		mat = sparse.csr_matrix(mat)
 	
-	print('Changed count: {}'.format(len(changed)))
+	#print('Changed count: {}'.format(len(changed)))
 
 	# Remove edges that will change core number from nedges
 	remove = []
@@ -308,10 +380,14 @@ def pruneCandidateEdges(graph, oedges, nedges, cnumber, pc, changed=None, size=N
 		e = list(e)
 		u = e[0]
 		v = e[1]
-		sg = kcore[min(cnumber[u], cnumber[v])]
-		cv = carray[min(cnumber[u], cnumber[v])]
 
-		if _checkIfCoreNumberChange(sg, cv, u, v):
+		#if u not in changed and v not in changed:
+		#	continue
+		#sg = kcore[min(cnumber[u], cnumber[v])]
+		#cv = carray[min(cnumber[u], cnumber[v])]
+
+		#if _checkIfCoreNumberChange(sg, cv, u, v):
+		if not checkCoreChange(mat, u, v, cnumber):
 			remove.append(set([u,v]))
 			if len(remove)%100 == 0:
 				print('Remove: {} of {}'.format(len(remove), len(nedges)))
@@ -323,26 +399,31 @@ def pruneCandidateEdges(graph, oedges, nedges, cnumber, pc, changed=None, size=N
 
 	print('Edges size \tO: {} N: {}'.format(len(oedges), len(nedges)))
 
+	#if len(nedges) > 0.5 * size:
+		 #Return if there are enough candidates left
+	#	return oedges, nedges
+
 	# If size of remove is less than size, add more
 	while len(nedges) < size and len(oedges) > 0:
 		e = list(oedges.pop(0))
-
 		u = e[0]
 		v = e[1]
 
-		sg = kcore[min(cnumber[u], cnumber[v])]
-		cv = carray[min(cnumber[u], cnumber[v])]
+		#sg = kcore[min(cnumber[u], cnumber[v])]
+		#cv = carray[min(cnumber[u], cnumber[v])]
 
-		if not _checkIfCoreNumberChange(sg, cv, u, v):
+		#if not _checkIfCoreNumberChange(sg, cv, u, v):
+		if not checkCoreChange(mat, u, v, cnumber):
 			nedges.append(set([u,v]))
 	
-		if len(nedges)%1000 == 0 or len(oedges)%1000 == 0:
+		if (len(nedges)%1000 == 0 and len(nedges) > 0) or (len(oedges)%1000 == 0 and len(oedges) > 0):
 			print('Edges size \tO: {} N: {}'.format(len(oedges), len(nedges)))
-		
+
+	print('Edges size \tO: {} N: {}'.format(len(oedges), len(nedges)))
 	return oedges, nedges
 
 
-def generateCandidateEdges(graph, cnumber, pc, cutoff, size, kcore, carray, rcd, knodes, iscore, shell):
+def generateCandidateEdges(graph, cnumber, cutoff, size, iscore, shell, rcd, graph_matrix):
 	"""
 	Generate list of edges which can be added without change in core number
 	"""
@@ -357,10 +438,13 @@ def generateCandidateEdges(graph, cnumber, pc, cutoff, size, kcore, carray, rcd,
 		if u not in graph.nodes():
 			continue
 
-		cand = [sn for sn in knodes[cnumber[u]] if u in sn][0]
-		cand = set(cand).difference(graph.neighbors(u))
-		cand = cand.intersection(nodes)
+		#cand = [sn for sn in knodes[cnumber[u]] if u in sn][0]
+		#cand = set(cand).difference(graph.neighbors(u))
+		#cand = cand.intersection(nodes)
 		#cand = [v for v in cand if cnumber[v] == cnumber[u]]
+
+		cand = nodes.difference(graph.neighbors(u))
+		#cand = [u for u in nodes if u not in graph.neighbors[u]]
 
 		for v in cand:
 			#if cnumber[v] == cnumber[u]: 				# (Temp) This will filter out edges that will not change core number
@@ -373,7 +457,7 @@ def generateCandidateEdges(graph, cnumber, pc, cutoff, size, kcore, carray, rcd,
 	
 	#oedges = edgePriority(oedges, rcd)
 	nedges = []
-	oedges, nedges = pruneCandidateEdges(graph, oedges, nedges, cnumber, pc, changed=None, size=size, carray=carray, kcore=kcore)
+	oedges, nedges = pruneCandidateEdges(graph, oedges, nedges, cnumber, size=size, mat=graph_matrix)
 	print('Pruned candidates: {}'.format(len(nedges)))
 
 	return oedges, nedges, vedges
@@ -448,11 +532,15 @@ def main(fname, sname, k=None, m=10):
 
 	print(nx.info(graph))
 
+	graph_matrix = nx.to_numpy_matrix(graph)
+	graph = nx.from_numpy_matrix(graph_matrix)
+	#graph_matrix = sparse.csr_matrix(graph_matrix)
+
 	cnumber = nx.core_number(graph)
 
 	kcore = generateCoreSubgraph(graph, cnumber)
-	carray = generateCoreNumber(kcore)
-	knodes = generateCoreSubgraphNodes(kcore)
+	#carray = generateCoreNumber(kcore)
+	#knodes = generateCoreSubgraphNodes(kcore)
 
 	cvals = cnumber.values()
 	
@@ -462,23 +550,22 @@ def main(fname, sname, k=None, m=10):
 		cutoff = min(cvals)
 		k = 100
 
-	step = int(graph.number_of_edges()/100)
+	step = int(graph.number_of_edges()/400)
 
 	nodes = [u for u in cnumber if cnumber[u] >= cutoff]
 
-	mcd = computeMCD(graph, cnumber, nodes)
-	pc = generatePureCore(graph, cnumber, mcd, nodes)
+	#mcd = computeMCD(graph, cnumber, nodes)
+	#pc = generatePureCore(graph, cnumber, mcd, nodes)
 	rcd = getRCD(graph, cnumber)
 	iscore = getCoreInfluence(cnumber, kcore)
 	shell = getShellConnectedComponents(graph, cnumber)
 	
 	#pc_size = [len(pc[u]) for u in pc]
 	
-	print(nx.info(graph))
 	print('\nMax core: {} \t Cut off: {}'.format(max(cvals), cutoff))
 	#print('Pure Core Size \t Max: {} \t Mean: {}'.format(max(pc_size), np.mean(pc_size)))
 
-	oedges, nedges, vedges = generateCandidateEdges(graph, cnumber, pc, cutoff, step, kcore, carray, rcd, knodes, iscore, shell)
+	oedges, nedges, vedges = generateCandidateEdges(graph, cnumber, cutoff, step, iscore, shell, rcd, graph_matrix)
 	print('Number of candidate: {} {}'.format(len(nedges),len(oedges)))
 
 	#nedges = edgePriority(nedges, rcd)
@@ -487,23 +574,29 @@ def main(fname, sname, k=None, m=10):
 
 	# Original graph
 	tsname = sname + '_k_' + str(k) + '_0.csv'
-	nx.write_edgelist(graph, tsname)
+	nx.write_edgelist(graph, tsname, data=False)
 
-	updatedNodes = []
+	#updatedNodes = []
 
-	while len(nedges) > 0 and i <= m*step:
+	while len(oedges) > 0 and i <= m*step:
 		e = list(nedges.pop(0))
 		graph.add_edge(e[0],e[1])
+		graph_matrix[e[0],e[1]] = 1
+		graph_matrix[e[1],e[0]] = 1
+		
 		i += 1
 
-		mcd = updateMCD(graph, cnumber, mcd, e)
-		pc, changed = updatePureCore(graph, cnumber, mcd, pc, e, nodes)
-		oedges, nedges = pruneCandidateEdges(graph, oedges, nedges, cnumber, pc, changed, step, carray=carray, kcore=kcore)
+		#graph_matrix = nx.to_numpy_matrix(graph)
+		#graph = nx.from_numpy_matrix(graph_matrix)
 
-		updatedNodes += changed
+		#mcd = updateMCD(graph, cnumber, mcd, e)
+		#pc, changed = updatePureCore(graph, cnumber, mcd, pc, e, nodes)
+		oedges, nedges = pruneCandidateEdges(graph, oedges, nedges, cnumber, size=step, mat=graph_matrix)
+
+		#updatedNodes += changed
 
 		if i%10 == 0:
-			#print('Recomputing edge priority')
+			print('Recomputing edge priority')
 			rcd = getRCD(graph, cnumber, nodes)
 			iscore = getCoreInfluence(cnumber, kcore)
 			shell = getShellConnectedComponents(graph, cnumber)
@@ -514,7 +607,7 @@ def main(fname, sname, k=None, m=10):
 			print('Number of candidate: {} {}'.format(len(nedges), len(oedges)))
 			print('Saving: {}'.format(tsname))
 			print(nx.info(graph))
-			nx.write_edgelist(graph, tsname)
+			nx.write_edgelist(graph, tsname, data=False)
 
 			t1 = time.time()
 			t.append(t1-t0)
@@ -525,7 +618,7 @@ def main(fname, sname, k=None, m=10):
 if __name__ == '__main__':
 	fname = sys.argv[1]
 	sname = sys.argv[2]
-	#k = int(sys.argv[3])
+	k = int(sys.argv[3])
 
-	main(fname, sname)
+	main(fname, sname, k)
 

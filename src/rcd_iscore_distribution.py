@@ -123,7 +123,7 @@ if __name__ == '__main__':
 	fname2 = sys.argv[2]
 	sname = sys.argv[3]
 	#k = int(sys.argv[4])
-	name = int(sys.argv[4])
+	name = float(sys.argv[4])
 	n = int(sys.argv[5]) == 1
 
 	# Generate nodes list

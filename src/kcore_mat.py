@@ -35,7 +35,7 @@ def kcoreMat(mat, l):
 	while len(candidates) > 0:
 		r = mat.dot(s)
 		for u in candidates:
-			if r[u,0] == k or (s[u,0] > 0 and r[u,0] < k):
+			if r[u,0] <= k:
 				cnumber[u] = k
 				candidates.remove(u)
 				s[u, 0] = 0
@@ -226,8 +226,9 @@ if __name__ == '__main__':
 
 	t = []
 	for _ in xrange(0, 100):
+		g = nx.from_numpy_matrix(mat)
 		t1 = time.time()
-		dnumber = kcore(nx.from_numpy_matrix(mat))
+		dnumber = kcore(g)
 		t.append(time.time() - t1)
 	print('Time Nor: {} {}'.format(np.mean(t), np.std(t)))
 

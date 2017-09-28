@@ -46,7 +46,7 @@ plotRCDIS <- function(fname, name, n) {
   data <- data[which(data$name %in% n),]
   
   pl <- ggplot(data=data)
-  pl <- pl + geom_point(aes(x=iscore, y=rcd), group=name, bins=10)
+  pl <- pl + geom_bin2d(aes(x=iscore, y=rcd), group=name, bins=10)
   pl <- pl + labs(title=name) + theme_bw()
   pl <- pl + ylab('RCD') + xlab('CIS') 
   #pl <- pl + xlim(0,15) + ylim(0,60)

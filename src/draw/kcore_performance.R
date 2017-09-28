@@ -37,8 +37,10 @@ plotChangeDetect <- function(fname) {
   
   p5 <- p5 + geom_crossbar(aes(x=name, y=mat_time, ymin=mat_time-mat_std, ymax=mat_time+mat_std, color='Matrix'))
   p5 <- p5 + geom_crossbar(aes(x=name, y=nor_time, ymin=nor_time-mat_std, ymax=nor_time+mat_std, color='Normal'))
-  p5 <- p5 + theme_bw() + xlab('Avgerage Degree') + ylab('Time') + labs(color='Algorithm', title='Time v Average Degree')
+  p5 <- p5 + theme_bw() + xlab('Avgerage Degree') + ylab('Time') + labs(color='Algorithm', title='k-Core Decomposition Time')
   
-  pl <- grid.arrange(p1,p2,p4)
+  #return(p3)
+  
+  pl <- grid.arrange(p1,p2,p3,p4)
   return(pl)
 }

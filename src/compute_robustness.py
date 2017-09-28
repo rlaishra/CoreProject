@@ -131,7 +131,7 @@ if __name__ == '__main__':
 	fname = sys.argv[1]
 	sname = sys.argv[2]
 	exp = int(sys.argv[3])
-	name = int(sys.argv[4])
+	name = float(sys.argv[4])
 	n = int(sys.argv[5]) == 1
 
 
