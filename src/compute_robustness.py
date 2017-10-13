@@ -26,7 +26,7 @@ def readGraph(fname):
 	else:
 		graph = nx.read_edgelist(fname)
 	graph.remove_edges_from(graph.selfloop_edges())
-	print(nx.info(graph))
+	#print(nx.info(graph))
 	return graph
 
 def nodesOrder(graph):
@@ -87,37 +87,43 @@ def saveCompiledData(sname, data, name, n):
 		writer.writerow(d + [name])
 
 def main(fname, sname, exp, name, n):
- 	k = range(10,100,10)
+ 	#k = range(10,100,10)
  	p = range(10,100,10)
+ 	k = [25,50,75,100]
 
- 	x = 0
+ 	results = {}
 
- 	data = []
- 	cdata = {}
+	for z in k:
+		x = 0
 
- 	while x < exp:
- 		for y in p:
-	 		graph = readGraph(fname)
- 			nodes = nodesOrder(graph)
+	 	adata = []
 
- 			# The baseline core numbers
- 			ocn = coreNumber(graph, nodes)
+	 	while x < exp:
+	 		tdata = []
+	 		for y in p:
+		 		graph = readGraph(fname)
+	 			nodes = nodesOrder(graph)
 
- 			num = int(graph.number_of_edges()*y/100)
- 			graph = removeEdges(graph, num)
+	 			# The baseline core numbers
+	 			ocn = coreNumber(graph, nodes)
 
- 			ncn = coreNumber(graph, nodes)
+	 			num = int(graph.number_of_edges()*y/100)
+	 			graph = removeEdges(graph, num)
 
- 			for z in k:
- 				cor = compare(ocn, ncn, z)
- 				data.append([x, y, z, cor])
+	 			ncn = coreNumber(graph, nodes)
 
- 				if (y,z) not in cdata:
- 					cdata[(y,z)] = []
- 				cdata[(y,z)].append(cor)
+	 			cor = compare(ocn, ncn, z)
+	 			tdata.append(cor)
+	 			#print(y, tdata)
 
- 				print(data[-1])
+	 		adata.append(np.mean(tdata))
+	 		#print(tdata)
+	 		x += 1
+	 	results[z] = np.mean(adata)
  		x += 1
+
+ 	#print('Mean Core Resilience: {} {}'.format(np.mean(adata), np.std(adata)))
+ 	#print('')
 
  	saveRawData(sname, data, name, n)
 

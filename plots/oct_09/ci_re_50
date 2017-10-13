@@ -1,0 +1,31 @@
+% Created by tikzDevice version 0.10.1 on 2017-10-10 02:31:10
+% !TEX encoding = UTF-8 Unicode
+\documentclass[10pt]{article}
+\usepackage{tikz}
+
+\usepackage[active,tightpage,psfixbb]{preview}
+
+\PreviewEnvironment{pgfpicture}
+
+\setlength\PreviewBorder{0pt}
+\begin{document}
+
+\begin{tikzpicture}[x=1pt,y=1pt]
+\definecolor{fillColor}{RGB}{255,255,255}
+\path[use as bounding box,fill=fillColor,fill opacity=0.00] (0,0) rectangle (144.54,144.54);
+\begin{scope}
+\path[clip] (  0.00,  0.00) rectangle (144.54,144.54);
+\definecolor{drawColor}{RGB}{255,255,255}
+\definecolor{fillColor}{RGB}{255,255,255}
+
+\path[draw=drawColor,line width= 0.6pt,line join=round,line cap=round,fill=fillColor] (  0.00,  0.00) rectangle (144.54,144.54);
+\end{scope}
+\begin{scope}
+\path[clip] (  5.50,  5.50) rectangle (139.04,139.04);
+\definecolor{fillColor}{gray}{0.92}
+
+\path[fill=fillColor] (  5.50,  5.50) rectangle (139.04,139.04);
+\end{scope}
+\end{tikzpicture}
+
+\end{document}

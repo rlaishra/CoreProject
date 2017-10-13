@@ -6,7 +6,7 @@ import os
 import cPickle as pickle
 import time
 import csv
-
+import scipy.stats as stats
 
 def readGraph(fname):
 	if fname.endswith('mtx'):
@@ -64,7 +64,7 @@ def getCoreInfluence(cnumber, kcore):
 			share = iScore[u]/len(supNodes)
 			for v in supNodes:
 				iScore[v] += share
-	print(len(empty))
+	
 
 	# Normalize between 0 and std
 	#imin = min(iScore.values())
@@ -76,22 +76,15 @@ def getCoreInfluence(cnumber, kcore):
 	return iScore
 
 
-def getRCD(graph, cnumber):
+def getCoreStrength(graph, cnumber):
 	data = {}
+	m = graph.number_of_edges()
 
 	for u in cnumber:
 		neighbors = graph.neighbors(u)
-		cd = len([v for v in neighbors if cnumber[u] == cnumber[v]]) + 1
-		#data[u] = cd/cnumber[u] + 1
-		data[u] = cd + 1
-
-	# Rescale by dividing by
-	#rmin = min(data.values())
-	#rmax = max(data.values())
-
-	#for u in data:
-	#	data[u] = (data[u] - rmin) / (rmax - rmin)
-
+		cd = len([v for v in neighbors if cnumber[u] <= cnumber[v]])
+		data[u] = cd - cnumber[u]
+		
 	return data
 
 def generateCoreSubgraph(graph, cnumber):
@@ -112,43 +105,41 @@ def saveData(sname, data, name, n):
 	
 	writer = csv.writer(f, delimiter=',')
 	if n:
-		writer.writerow(['iscore', 'rcd', 'core', 'name'])
+		writer.writerow(['ci', 'cs', 'cr', 'name'])
 	
 	for d in data:
 		writer.writerow(d + [name])
 
 
 if __name__ == '__main__':
-	fname1 = sys.argv[1]
-	fname2 = sys.argv[2]
-	sname = sys.argv[3]
-	#k = int(sys.argv[4])
-	name = float(sys.argv[4])
-	n = int(sys.argv[5]) == 1
+	fname = sys.argv[1]
+	sname = sys.argv[2]
+	name = float(sys.argv[3])
+	n = int(sys.argv[4]) == 1
 
 	# Generate nodes list
-	graph = readGraph(fname1)
+	graph = readGraph(fname)
 	cnumber = nx.core_number(graph)
-	#cutoff = sorted(cnumber.values(), reverse=True)[int(len(cnumber)*k/100)]
-	cutoff = 0
-	nodes = [u for u in graph.nodes() if cnumber[u] >= cutoff]
+	nodes = graph.nodes()
+	#cutoff = 0
+	#nodes = [u for u in graph.nodes() if cnumber[u] >= cutoff]
 
 	# Get data
-	graph = readGraph(fname2)
-	cnumber = nx.core_number(graph)
+	#graph = readGraph(fname2)
+	#cnumber = nx.core_number(graph)
 	kcore = generateCoreSubgraph(graph, cnumber)
 
 	#graph = graph.subgraph(nodes)
-	iScore = getCoreInfluence(cnumber, kcore)
-	rcd = getRCD(graph, cnumber)
+	ci = getCoreInfluence(cnumber, kcore)
+	cs = getCoreStrength(graph, cnumber)
+
+	#iScore = {u:iScore[u] for u in nodes}
+	#rcd = {u:rcd[u] for u in nodes}
 
 	data = []
 
 	for u in nodes:
-		data.append([iScore[u], rcd[u], cnumber[u]])
-
-	print('CIN \t 75: {} \t 90: {} \t 95: {} \t Mean: {}'.format(np.percentile(iScore.values(), 75),np.percentile(iScore.values(), 90),np.percentile(iScore.values(), 95), np.mean(iScore.values())))
-	print('RCD \t 5: {} \t 10: {} \t 25: {} \t Mean: {}'.format(np.percentile(rcd.values(), 5),np.percentile(rcd.values(), 10),np.percentile(rcd.values(), 25), np.mean(rcd.values())))
+		data.append([ci[u], cs[u], cnumber[u]])
 
 	saveData(sname, data, name, n)
 

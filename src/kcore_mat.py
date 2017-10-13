@@ -73,10 +73,10 @@ def checkCoreChangeMat(mat, edges, cnumber):
 	for e in edges:
 		nodes.append(e[0])
 		nodes.append(e[1])
+	cn = {nodes[i]:cnumber[nodes[i]] for i in xrange(0, len(nodes))}
 	nodes = set(nodes)
-	cn = [cnumber[u] for u in nodes]
-	kmin = min(cn)
-	kmax = max(cn)
+	kmin = min(cn.values())
+	kmax = max(cn.values())
 
 	for e in edges:
 		mat[e[0],e[1]] = 1
@@ -85,17 +85,16 @@ def checkCoreChangeMat(mat, edges, cnumber):
 	rem = [i for i in cnumber if cnumber[i] < kmin]
 	mat = np.delete(mat, rem, 0)
 	mat = np.delete(mat, rem, 1)
-	
+
 	s = np.matrix([1]*len(mat))
 	s = np.transpose(s)
 	
 	k = kmin
-	
-	mat = sparse.csr_matrix(mat)
-	changed = []
+	m = sparse.csr_matrix(mat)
+	changed = set([])
 
 	while k  < kmax:
-		r = mat.dot(s)
+		r = m.dot(s)
 		can = np.where(s <= 0)[0]
 		r[can, 0] = k + 1
 		can = np.where(r <= k)[0]
@@ -104,11 +103,12 @@ def checkCoreChangeMat(mat, edges, cnumber):
 			k += 1
 			continue
 		
-		for u in can:
-			if k != cnumber[u]:
-				changed.append(u)
-		
 		s[can, 0] = 0
+		can = nodes.intersection(can)
+		
+		for u in can:
+			if k != cn[u]:
+				changed.update([u])
 
 	whitelist = [] 		# Edges that does not change core number
 	blacklist = []		# Edges that changes core number
@@ -116,9 +116,9 @@ def checkCoreChangeMat(mat, edges, cnumber):
 	for e in edges:
 		if e[0] not in changed and e[1] not in changed:
 			whitelist.append(e)
-		elif e[0] in changed and cnumber[e[0]] > cnumber[e[1]]:
+		elif e[0] in changed and e[1] not in changed and cnumber[e[0]] > cnumber[e[1]]:
 			whitelist.append(e)
-		elif e[1] in changed and cnumber[e[1]] > cnumber[e[0]]:
+		elif e[1] in changed and e[0] not in changed and cnumber[e[1]] > cnumber[e[0]]:
 			whitelist.append(e)
 	blacklist = [e for e in edges if e not in whitelist]
 	#print(len(whitelist), len(blacklist), len(edges))
@@ -193,11 +193,13 @@ def performance(pred, ground):
 
 	print('TP: {} \t FP: {} \t FN: {} \t TN: {}'.format(tp, fp, fn, tn))
 
-def edgeGroups(edges, cnumber):
+def edgeGroups(edges, cnumber, graph):
+	pc = generatePureCore(graph, cnumber)
+	
 	# Set of edges where the endpoints have same core number
-	sim = [e for e in edges if cnumber[e[0]] == cnumber[e[1]]]
+	sim = set([e for e in edges if cnumber[e[0]] == cnumber[e[1]]])
 	# Set of edges where the endpoints do not have same core number
-	dis = [e for e in edges if e not in sim]
+	dis = set([e for e in edges if e not in sim])
 
 	# Set of edges involving a node
 	node_edges = {}
@@ -216,42 +218,125 @@ def edgeGroups(edges, cnumber):
 	while len(sim) > 0:
 		nodes = set([])
 		sl = []
+		spc = set([])
+		scn = set([])
 		for e in sim:
-			if e[0] not in nodes and e[1] not in nodes:
+			if (cnumber[e[0]] not in scn and cnumber[e[1]] not in scn)\
+			 or (e[0] not in spc and e[1] not in spc):
 				sl.append(e)
 				nodes.update([e[0], e[1]])
+				scn.update([cnumber[e[0]], cnumber[e[1]]])
+				spc.update(pc[e[0]])
+				spc.update(pc[e[1]])
 		sim_el.append(sl)
-		sim = [e for e in sim if e not in sl]
+		#sim = [e for e in sim if e not in sl]
+		sim.difference_update(sl)
 
 	while len(dis) > 0:
 		nodes = set([])
-		kmin = np.inf
-		kmax = 0
 		sl = []
+		spc = set([])
+		scn = {}
 		for e in dis:
-			if e[0] not in nodes and e[1] not in nodes:
+			if (cnumber[e[0]] not in scn and cnumber[e[1]] not in scn)\
+			 or (e[0] not in spc and e[1] not in spc):
 				sl.append(e)
 				nodes.update([e[0], e[1]])
-			elif e[0] in nodes:
-				if cnumber[e[1]] < min([min(cnumber[f[0]], cnumber[f[1]]) for f in sl]):
+				scn[e[0]] = [cnumber[e[1]]]
+				scn[e[1]] = [cnumber[e[0]]]
+				spc.update(pc[e[0]])
+				spc.update(pc[e[1]])
+			elif e[0] in nodes and len(scn[e[0]]) < 2:
+				if cnumber[e[0]] < cnumber[e[1]] and cnumber[e[0]] > max(scn[e[0]]):
 					sl.append(e)
 					nodes.update([e[0], e[1]])
-				if cnumber[e[1]] > max([max(cnumber[f[0]], cnumber[f[1]]) for f in sl]):
+					scn[e[0]].append(cnumber[e[1]])
+					scn[e[1]] = [cnumber[e[0]]]
+					spc.update(pc[e[0]])
+					spc.update(pc[e[1]])
+				elif cnumber[e[0]] > cnumber[e[1]] and cnumber[e[0]] < min(scn[e[0]]):
+				#elif cnumber[e[1]] > max(scn):
 					sl.append(e)
 					nodes.update([e[0], e[1]])
-			elif e[1] in nodes:
-				if cnumber[e[0]] < min([min(cnumber[f[0]], cnumber[f[1]]) for f in sl]):
+					scn[e[0]].append(cnumber[e[1]])
+					scn[e[1]] = [cnumber[e[0]]]
+					spc.update(pc[e[0]])
+					spc.update(pc[e[1]])
+			elif e[1] in nodes and len(scn[e[1]]) < 2:
+				if cnumber[e[1]] < cnumber[e[0]] and cnumber[e[1]] > max(scn[e[1]]):
+				#if cnumber[e[0]] < min(scn):
 					sl.append(e)
 					nodes.update([e[0], e[1]])
-				if cnumber[e[0]] > max([max(cnumber[f[0]], cnumber[f[1]]) for f in sl]):
+					scn[e[1]].append(cnumber[e[0]])
+					scn[e[0]] = [cnumber[e[1]]]
+					spc.update(pc[e[0]])
+					spc.update(pc[e[1]])
+				#if cnumber[e[0]] > max(scn):
+				elif cnumber[e[1]] > cnumber[e[0]] and cnumber[e[1]] < min(scn[e[1]]):
 					sl.append(e)
 					nodes.update([e[0], e[1]])
+					scn[e[1]].append(cnumber[e[0]])
+					scn[e[0]] = [cnumber[e[1]]]
+					spc.update(pc[e[0]])
+					spc.update(pc[e[1]])
 		dis_el.append(sl)
-		dis = [e for e in dis if e not in sl]
+		#dis = [e for e in dis if e not in sl]
+		dis.difference_update(sl)
 
 	el = sim_el + dis_el
 
+	print('Edge Groups', len(el), len(sim_el), len(dis_el))
+
 	return el
+
+def computeMCD(graph, cnumber):
+	mcd = {}
+	nodes = graph.nodes()
+	for u in nodes:
+		mcd[u] = 0
+		n = graph.neighbors(u)
+		for v in n:
+			if cnumber[u] <= cnumber[v]:
+				mcd[u] += 1
+
+	return mcd
+
+def findPureCore(graph, cnumber, mcd, u):
+	"""
+	Find the pure core of node u 
+	"""
+	# Core number condition
+	#if candidates is None:
+	#	candidates = cnumber.keys()
+
+	nodes = [v for v in cnumber if cnumber[v] == cnumber[u]]
+
+	# MCD condition
+	nodes = [v for v in nodes if mcd[v] > cnumber[u]]
+	
+	# Reachability condition
+	nodes.append(u) 				# u inserted to check for reachabilty
+	nodes = set(nodes)
+
+	sg = graph.subgraph(nodes)
+	cc = nx.connected_components(sg)
+
+	for cm in cc:
+		if u in cm:
+			cm.remove(u)
+			return cm
+				
+	return set([])
+	
+
+def generatePureCore(graph, cnumber):
+	mcd = computeMCD(graph, cnumber)
+	pc = {}
+	nodes = graph.nodes()
+	for u in nodes:
+		pc[u] = findPureCore(graph, cnumber, mcd, u)
+	
+	return pc
 
 if __name__ == '__main__':
 	n1 = 100
@@ -281,7 +366,8 @@ if __name__ == '__main__':
 		cnumber = kcoreMat(m, len(mat))
 		t.append(time.time() - t1)
 	print('Time Mat: {} {}'.format(np.mean(t), np.std(t)))
-	sdata.append(np.mean(t))
+	#sdata += [np.mean(t), np.std(t)]
+	sdata += [np.mean(t)]
 
 	t = []
 	for _ in xrange(0, n1):
@@ -290,7 +376,8 @@ if __name__ == '__main__':
 		dnumber = kcore(g)
 		t.append(time.time() - t1)
 	print('Time Nor: {} {}'.format(np.mean(t), np.std(t)))
-	sdata.append(np.mean(t))
+	#sdata += [np.mean(t), np.std(t)]
+	sdata += [np.mean(t)]
 
 
 	t = []
@@ -300,7 +387,8 @@ if __name__ == '__main__':
 		core_ground = nx.core_number(g)
 		t.append(time.time() - t1)
 	print('Time Ground: {} {}'.format(np.mean(t), np.std(t)))
-	sdata.append(np.mean(t))
+	#sdata += [np.mean(t), np.std(t)]
+	sdata += [np.mean(t)]
 	
 	#cnumber = {nodes[u]:cnumber[u] for u in cnumber}
 	#print(cnumber)
@@ -308,54 +396,74 @@ if __name__ == '__main__':
 	checkCorrectness(cnumber, core_ground)
 	checkCorrectness(dnumber, core_ground)
 
-	#n1 = np.random.randint(0, len(mat), size=min(len(mat), n2))
-	#n2 = np.random.randint(0, len(mat), size=min(len(mat), n2))
-	edges = [(u,v) for u in xrange(0, len(mat)) for v in xrange(0, len(mat)) if not graph.has_edge(u,v) and u != v]
+	l1 = np.random.randint(0, len(mat), size=min(1000, len(mat)))
+	l2 = np.random.randint(0, len(mat), size=min(1000, len(mat)))
+	edges = [(u,v) for u in l1 for v in l2 if not graph.has_edge(u,v) and u != v]
 	np.random.shuffle(edges)
 	edges = edges[:n2]
 	print('Edges selected')
 
 	t = []
-	mresults = [False]*len(edges)
-	t1 = time.time()
-	el = edgeGroups(edges, cnumber)
-	t.append(time.time() - t1)
-	for e in el:
-		m = np.copy(mat)
+	g = nx.from_numpy_matrix(mat)
+	for _ in xrange(0, 1):
+		mresults = [False]*len(edges)
+		#t = []
 		t1 = time.time()
-		whitelist, blacklist = checkCoreChangeMat(m, e, cnumber)
+		el = edgeGroups(edges, cnumber, g)
 		t.append(time.time() - t1)
-		for u in whitelist:
-			i = edges.index(u)
-			mresults[i] = True
-	#print(mresults)
-	print('Time mat: {}'.format(np.sum(t)/len(edges)))
-	sdata.append(np.sum(t)/len(edges))
+		print(t)
+
+		for e in el:
+			m = np.copy(mat)
+			t1 = time.time()
+			whitelist, blacklist = checkCoreChangeMat(m, e, cnumber)
+			t.append(time.time() - t1)
+		
+			for u in whitelist:
+				i = edges.index(u)
+				mresults[i] = True
+		
+		#print(mresults)
+		print('Time mat: {}'.format(np.sum(t)/len(edges)))
+		#t.append(np.sum(tt)/len(edges))
+		#print(t)
+
+	#sdata += [np.mean(t), np.std(t)]
+	sdata += [np.sum(t)/len(edges)]
 
 	t = []
-	kresults = []
-	for e in edges:
-		g = nx.from_numpy_matrix(mat)
-		t1 = time.time()
-		r = checkCoreChange(g, e[0], e[1], cnumber)
-		t.append(time.time() - t1)
-		kresults.append(r)
+	for _ in xrange(0, 1):
+		tt = []
+		kresults = []
+		for e in edges:
+			g = nx.from_numpy_matrix(mat)
+			t1 = time.time()
+			r = checkCoreChange(g, e[0], e[1], cnumber)
+			tt.append(time.time() - t1)
+			kresults.append(r)
 
-	print('Time normal: {}'.format(np.mean(t)))
-	sdata.append(np.sum(t)/len(edges))
+		print('Time normal: {}'.format(np.sum(tt)/len(edges)))
+		t.append(np.sum(tt)/len(edges))
+
+	#sdata += [np.mean(t), np.std(t)]
+	sdata += [np.mean(t)]
 	
 	t = []
-	baseline = []
-	for e in edges:
-		g = nx.from_numpy_matrix(mat)
-		t1 = time.time()
-		r = checkCoreChangeBaseline(g, e[0], e[1])
-		baseline.append(r)
-		t.append(time.time() - t1)
-		kresults.append(r)
-	#print(baseline)
-	print('Time baseline: {}'.format(np.mean(t)))
-	sdata.append(np.sum(t)/len(edges))
+	for _ in xrange(0, 1):
+		tt = []
+		baseline = []
+		for e in edges:
+			g = nx.from_numpy_matrix(mat)
+			t1 = time.time()
+			r = checkCoreChangeBaseline(g, e[0], e[1])
+			tt.append(time.time() - t1)
+			baseline.append(r)
+		#print(baseline)
+		print('Time baseline: {}'.format(np.sum(tt)/len(edges)))
+		t.append(np.sum(tt)/len(edges))
+	
+	#sdata += [np.mean(t), np.std(t)]
+	sdata += [np.mean(t)]
 
 	#print(edges)
 	#print(mresults)
@@ -368,6 +476,7 @@ if __name__ == '__main__':
 	with open(sname, 'a') as f:
 		writer = csv.writer(f, delimiter=',')
 		if header:
-			writer.writerow(['name','nodes','edges','degree','sparsity','mat_dec','nor_dec','nx_dec','mat_cha','nor_cha','nx_cha'])
+			#writer.writerow(['name','nodes','edges','degree','sparsity','mat_dec','mat_dec_s','nor_dec','nor_dec_s','nx_dec','nx_dec_s','mat_cha','mat_cha_s','nor_cha','nor_cha_s','nx_cha','nx_cha_s'])
+			writer.writerow(['name','nodes','edges','degree','sparsity','mat_dec','nor_dec','nx_dec','mat_cha','nor_cha','nx_cha',])
 		writer.writerow(sdata)
 
