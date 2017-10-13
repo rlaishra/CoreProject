@@ -45,5 +45,5 @@ snames = [
 
 if __name__ == '__main__':
 	for i in xrange(0, len(fnames)):
-		command = 'python src/imporve_robustness.py {} {} 25 alg'.format(fnames[i], snames[i])
+		command = 'python src/improve_robustness.py {} {} 25 alg'.format(fnames[i], snames[i])
 		os.system(command)
