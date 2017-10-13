@@ -744,5 +744,5 @@ if __name__ == '__main__':
 	k = int(sys.argv[3])
 	mode = sys.argv[4]
 
-	main(fname, sname, None, 20, mode)
+	main(fname, sname, k, 20, mode)
 

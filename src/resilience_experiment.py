@@ -16,10 +16,10 @@ fnames = [
 'data/tech-pgp/tech-pgp.edges',
 'data/tech-routers-rf/tech-routers-rf.mtx',
 'data/tech-WHOIS/tech-WHOIS.mtx',
-'data/p2p-Gnutetlla08.csv',
-'data/p2p-Gnutetlla09.csv',
-'data/p2p-Gnutetlla24.txt',
-'data/p2p-Gnutetlla25.txt',
+'data/p2p-Gnutella08.csv',
+'data/p2p-Gnutella09.csv',
+'data/p2p-Gnutella24.txt',
+'data/p2p-Gnutella25.txt',
 ]
 
 snames = [
@@ -37,10 +37,10 @@ snames = [
 'outputs/oct_13/tech-pgp',
 'outputs/oct_13/tech-routers-rf',
 'outputs/oct_13/tech-WHOIS',
-'outputs/oct_13/p2p-Gnutetlla08',
-'outputs/oct_13/p2p-Gnutetlla09',
-'outputs/oct_13/p2p-Gnutetlla24',
-'outputs/oct_13/p2p-Gnutetlla25',
+'outputs/oct_13/p2p-Gnutella08',
+'outputs/oct_13/p2p-Gnutella09',
+'outputs/oct_13/p2p-Gnutella24',
+'outputs/oct_13/p2p-Gnutella25',
 ]
 
 if __name__ == '__main__':
