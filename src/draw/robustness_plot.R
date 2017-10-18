@@ -227,7 +227,7 @@ plotTopCIRe <- function(fname, name) {
   return(p)
 }
 
-resilianceChange <- function(fname, name) {
+resilianceChange <- function(fname, name, sname) {
   data <- read.csv(fname, header = TRUE, sep = ',')
   data <- data[which(data$n %in% c(25)),]
   #data <- data[which(data$name <= 2),]
@@ -238,14 +238,15 @@ resilianceChange <- function(fname, name) {
   pl <- pl + geom_line(aes(y=cr, x=name, group=type, color=factor(type)))
   pl <- pl + geom_point(aes(y=cr, x=name, group=type, color=factor(type)))
   pl <- pl + geom_ribbon(aes(ymin=cr-cr_s, ymax=cr+cr_s, x=name, group=type, fill=factor(type)), alpha=0.2)
-  pl <- pl + xlab('Nodes added (%)') + ylab(TeX('$R_{25}^{0,100}(G)$'))
+  pl <- pl + xlab('Nodes added') + ylab(TeX('$R_{25}^{0,100}(G)$'))
   pl <- pl + theme_bw()
   pl <- pl + guides(fill=FALSE)
-  pl <- pl + labs(title = name, color='Algorithm')
+  #pl <- pl + labs(title = name, color='Algorithm')
+  pl <- pl + labs(color='Algorithm')
   
-  # tikz(file = sname, width = 2, height = 2, standAlone = TRUE)
-  # print(pl)
-  # dev.off()
+  tikz(file = sname, width = 4, height = 3, standAlone = TRUE)
+  print(pl)
+  dev.off()
   
   return(pl)
 }
