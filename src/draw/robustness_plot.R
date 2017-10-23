@@ -5,7 +5,7 @@ library(tikzDevice)
 
 robustnessPK <- function(fname, name, n) {
   data <- read.csv(fname, header = TRUE, sep = ',')
-  data <- data[which(data$name %in% n),]
+  # data <- data[which(data$name %in% n),]
   #data <- data[which(data$k <= 50),]
   #data <- data[which(data$p <= 75),]
   

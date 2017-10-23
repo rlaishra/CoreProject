@@ -125,7 +125,7 @@ def nodesOrder(graph):
 
 def coreNumber(graph, nodes):
 	cn = nx.core_number(graph)
-	cn = [cn[u] for u in nodes]
+	cn = {u:cn[u] for u in nodes if u in cn}
 	return cn
 
 def removeEdges(graph, num):
@@ -135,15 +135,21 @@ def removeEdges(graph, num):
 	graph.remove_edges_from(remove)
 	return graph
 
+def removeNodes(graph, num):
+	nodes = list(graph.nodes())
+	random.shuffle(nodes)
+	remove = nodes[:num]
+	graph.remove_nodes_from(remove)
+	return graph
+
 def compare(x1, x2, k):
-	sl = sorted(x1, reverse=True)
+	sl = sorted(x1, key=x1.get, reverse=True)
+	#print(len(sl), k,  len(sl) * k / 100)
+	th = sl[int(len(sl) * k / 100)]
 
-	if k < 100:
-		th = sl[int(len(sl) * k / 100)]
-	else:
-		th = 0
-
-	ind = [j for j in xrange(0, len(x1)) if x1[j] >= th]
+	# Filter out nodes not in x2 from x1
+	x1 = {u:x1[u] for u in x1 if u in x2}
+	ind = [u for u in x1 if x1[u] >= th]
 
 	d1 = [x1[i] for i in ind] + [0]
 	d2 = [x2[i] for i in ind] + [0]

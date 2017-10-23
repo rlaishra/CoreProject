@@ -183,7 +183,7 @@ def _getSupportNodes(graph, cnumber, u):
 	# Node u relies on higher nodes for its core number
 	return [v for v in graph.neighbors(u) if cnumber[v] > cnumber[u]]
 
-def updateCoreInfluence(graph, cnumber, kcore, ci, edge):
+def updateCoreInfluence(graph, cnumber, kcore, ci, cd, edge):
 	kmin = min(cnumber[e[0]], cnumber[e[1]])
 	kmax = max(cnumber.values())
 
@@ -198,6 +198,7 @@ def updateCoreInfluence(graph, cnumber, kcore, ci, edge):
 		cand = set(cand)
 		for u in cand:
 			supNodes = _getSupportNodes(kcore[k], cnumber, u)
+			cd[u] = 1 if len(supNodes) > 0 else 0
 			if len(supNodes) < 1:
 				empty.append(u)
 				continue
@@ -213,7 +214,7 @@ def updateCoreInfluence(graph, cnumber, kcore, ci, edge):
 
 def getCoreInfluence(cnumber, kcore, nodes=None):
 	"""
-	Compute the influence score for each nodes
+	Compute the influence score and core influence delta for each nodes
 	"""
 	if nodes is None:
 		nodes = cnumber.keys()
@@ -226,6 +227,7 @@ def getCoreInfluence(cnumber, kcore, nodes=None):
 	kmax = min(knumber)
 
 	ci = {u:1 for u in nodes}
+	cd = {u:1 for u in nodes}
 
 	empty = []
 	for k in xrange(kmin, kmax + 1):
@@ -234,6 +236,7 @@ def getCoreInfluence(cnumber, kcore, nodes=None):
 
 		for u in set(knodes).intersection(nodes):
 			supNodes = _getSupportNodes(kcore[k], cnumber, u)
+			cd[u] = 1 if len(supNodes) > 0 else 0
 			if len(supNodes) < 1:
 				empty.append(u)
 				continue
@@ -258,7 +261,7 @@ def getCoreInfluence(cnumber, kcore, nodes=None):
 		ci[u] = (ci[u]-imin)/(imax - imin)
 	
 	#print('Core Influence: {}'.format(len(empty)))
-	return ci
+	return ci, cd
 
 
 def baselinePriority(nedges, cnumber, degree, mode='random'):
@@ -284,20 +287,34 @@ def baselinePriority(nedges, cnumber, degree, mode='random'):
 		return edges
 
 
-def edgePriority(nedges, cnumber, cs, ci):
+def edgePriority(nedges, cnumber, cs, ci, cd, mode='alg_edge'):
 	priority = {}
 	epsilon = 0.001
-	for e in nedges:
-		e = list(e)
-		u = e[0]
-		v = e[1]
-		if u in cs and v in cs:
+	
+	if mode = 'alg_edge':
+		for e in nedges:
+			e = list(e)
+			u = e[0]
+			v = e[1]
+			if u in cs and v in cs:
+				if cnumber[u] < cnumber[v]:
+					priority[(u,v)] = ci[u]/(cs[u] + epsilon)
+				elif cnumber[u] > cnumber[v]:
+					priority[(u,v)] = ci[v]/(cs[v] + epsilon)
+				else:
+					priority[(u,v)] = ci[u]/(cs[u] + epsilon) + ci[v]/(cs[v] + epsilon)
+	elif mode == 'alg_node':
+		for e in nedges:
+			e = list(e)
+			u = e[0]
+			v = e[1]
+
 			if cnumber[u] < cnumber[v]:
-				priority[(u,v)] = ci[u]/(cs[u] + epsilon)
-			elif cnumber[u] > cnumber[v]:
-				priority[(u,v)] = ci[v]/(cs[v] + epsilon)
-			else:
-				priority[(u,v)] = ci[u]/(cs[u] + epsilon) + ci[v]/(cs[v] + epsilon)
+				priority[(u,v)] = ci[u] * cd[u]
+			elif cnumber[v] < cnumber[u]:
+				priority[(u,v)] = ci[v] * cd[u]
+			elif cnumber[u] == cnumber[v]:
+				priority[(u,v)] = ci[u] * cd[u] + ci[u] * cd[u]
 
 	edges = sorted(priority, key=priority.get, reverse=True)
 	
@@ -603,7 +620,7 @@ def getShellConnectedComponents(graph, cnumber, candidates=None):
 	return nodes
 
 
-def main(fname, sname, k=None, m=10, mode='alg'):
+def main(fname, sname, k=None, m=10, mode='alg_edge'):
 	"""
 	fname 	: The original data file
 	sname 	: The save location and fname
@@ -643,7 +660,7 @@ def main(fname, sname, k=None, m=10, mode='alg'):
 	step = int(graph.number_of_edges()/400)
 
 
-	if mode == 'alg':
+	if mode == 'alg_edge' or mode == 'alg_node' or mode = 'alg_both':
 		nodes = set([u for u in cnumber if cnumber[u] >= cutoff])
 	elif mode == 'core':
 		nodes = set(sorted(cnumber, key=cnumber.get, reverse=True)[0:int(len(cnumber)*0.1)])
@@ -656,7 +673,7 @@ def main(fname, sname, k=None, m=10, mode='alg'):
 	pc = generatePureCore(graph, cnumber, mcd)
 	
 	cs = getCoreStrength(graph, cnumber)
-	ci = getCoreInfluence(cnumber, kcore)
+	ci, cd = getCoreInfluence(cnumber, kcore)
 	shell = getShellConnectedComponents(graph, cnumber)
 	
 	
@@ -665,15 +682,15 @@ def main(fname, sname, k=None, m=10, mode='alg'):
 	nedges = generateCandidateEdges(graph, cnumber, cutoff, pc, nodes)
 	print('Number of candidate: {}'.format(len(nedges)))
 
-	if mode == 'alg':
-		nedges = edgePriority(nedges, cnumber, cs, ci)
+	if mode == 'alg_edge' or mode == 'alg_node' or mode == 'alg_both':
+		nedges = edgePriority(nedges, cnumber, cs, ci, cd, mode)
 	else:
 		nedges = baselinePriority(nedges, cnumber, degree, mode)
 
 	i = 0
 
 	# Original graph
-	tsname = sname + '_k_' + str(k) + '_0.0.csv'
+	tsname = sname + '_' + mode + '_' + '_k_' + str(k) + '_0.0.csv'
 	nx.write_edgelist(graph, tsname, data=False)
 
 	while len(nedges) > 0 and i <= m*step:
@@ -694,39 +711,15 @@ def main(fname, sname, k=None, m=10, mode='alg'):
 		pc = updatePureCore(graph, cnumber, mcd, pc, e)
 		nedges = updateCandidateEdges(graph, nedges, cnumber, pc, e)
 
-		if mode == 'alg':
+		if mode == 'alg_edge' or mode == 'alg_node' or mode == 'alg_both':
 			cs = getCoreStrength(graph, cnumber)
-			ci = getCoreInfluence(cnumber, kcore)
-			nedges = edgePriority(nedges, cnumber, cs, ci)
+			ci, cd = getCoreInfluence(cnumber, kcore)
+			nedges = edgePriority(nedges, cnumber, cs, ci, cd, mode)
 		else:
 			nedges = baselinePriority(nedges, cnumber, graph.degree(), mode=mode)
 
-		#graph_matrix = nx.to_numpy_matrix(graph)
-		#graph = nx.from_numpy_matrix(graph_matrix)
-
-		#mcd = updateMCD(graph, cnumber, mcd, e)
-		#pc, _ = updatePureCore(graph, cnumber, mcd, pc, e, nodes)
-		#_, removed = pruneCandidateEdges(graph, nedges, cnumber, pc, mat=graph_matrix)
-		#nedges = [e for e in nedges if e not in removed]
-
-		#updatedNodes += changed
-		"""
-		if len(nedges)%10 == 0:
-			print('Recomputing core influence and priority')
-			cs = getCoreStrength(graph, cnumber, nodes)
-			ci = getCoreInfluence(cnumber, kcore)
-			shell = getShellConnectedComponents(graph, cnumber)
-
-			# Algorithm
-			nedges, _ = pruneCandidateEdges(graph, nedges, cnumber, pc, mat=graph_matrix)
-			nedges = edgePriority(nedges, cs, cnumber, ci, shell) 
-			
-			# Baseline
-			#nedges = baselinePriority(nedges, cnumber, degree, mode='degree')
-		"""
-
 		if i%step == 0:
-			tsname = sname + '_k_' + str(k) + '_' + str(float(i/(step*4))) + '.csv'
+			tsname = sname + '_' + mode + '_'  + '_k_' + str(k) + '_' + str(float(i/(step*4))) + '.csv'
 			#print('Number of candidate: {} {}'.format(len(nedges), len(oedges)))
 			print('Saving: {}'.format(tsname))
 			print(nx.info(graph))

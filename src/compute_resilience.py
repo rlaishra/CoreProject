@@ -35,7 +35,7 @@ def nodesOrder(graph):
 
 def coreNumber(graph, nodes):
 	cn = nx.core_number(graph)
-	cn = [cn[u] for u in nodes]
+	cn = {u:cn[u] for u in nodes if u in cn}
 	return cn
 
 def removeEdges(graph, num):
@@ -45,11 +45,27 @@ def removeEdges(graph, num):
 	graph.remove_edges_from(remove)
 	return graph
 
+def removeNodes(graph, num):
+	nodes = list(graph.nodes())
+	random.shuffle(nodes)
+	remove = nodes[:num]
+	graph.remove_nodes_from(remove)
+	return graph
+
 def compare(x1, x2, k):
-	sl = sorted(x1, reverse=True)
+	sl = sorted([x1[u] for u in x1], reverse=True)
+	#print(len(sl), k,  len(sl) * k / 100)
 	th = sl[int(len(sl) * k / 100)]
 
-	ind = [j for j in xrange(0, len(x1)) if x1[j] >= th]
+	# Filter out nodes not in x2 from x1
+	#print('threshold',th)
+	#print(len(x1), len(x2))
+	#print(max([x1[u] for u in x1]))
+	x1 = {u:x1[u] for u in x1 if u in x2}
+	#print(max([x1[u] for u in x1]))
+	ind = [u for u in x1 if x1[u] >= th]
+	#print(len(x1), len(x2))
+	#print(ind)
 
 	d1 = [x1[i] for i in ind] + [0]
 	d2 = [x2[i] for i in ind] + [0]
@@ -62,11 +78,11 @@ def compare(x1, x2, k):
 	return cor
 
 
-def saveRawData(sname, data, name, n):
+def saveRawData(sname, data, name, n, noise):
 	if n:
-		f = open(sname + '_raw.csv', 'w')
+		f = open(sname + '_' + noise + '_' + '_raw.csv', 'w')
 	else:
-		f = open(sname + '_raw.csv', 'a')
+		f = open(sname + '_' + noise + '_' + '_raw.csv', 'a')
 
 	writer = csv.writer(f, delimiter=',')
 	if n:
@@ -74,11 +90,11 @@ def saveRawData(sname, data, name, n):
 	for d in data:
 		writer.writerow(d + [name])
 
-def saveCompiledData(sname, data, name, n):
+def saveCompiledData(sname, data, name, n, noise):
 	if n:
-		f = open(sname + '_compiled.csv', 'w')
+		f = open(sname + '_' + noise + '_' + '_compiled.csv', 'w')
 	else:
-		f = open(sname + '_compiled.csv', 'a')
+		f = open(sname + '_' + noise + '_' + '_compiled.csv', 'a')
 
 	writer = csv.writer(f, delimiter=',')
 	if n:
@@ -86,12 +102,14 @@ def saveCompiledData(sname, data, name, n):
 	for d in data:
 		writer.writerow(d + [name])
 
-def main(fname, sname, exp, name, n):
- 	#k = range(10,100,10)
- 	p = range(10,100,10)
- 	k = [25,50,75,100]
+def main(fname, sname, exp, name, n, noise='edges'):
+ 	k = range(20,100,20)
+ 	p = range(1,25,1)
+ 	#k = [1]
 
  	results = {}
+ 	data = []
+ 	cdata = {}
 
 	for z in k:
 		x = 0
@@ -107,31 +125,41 @@ def main(fname, sname, exp, name, n):
 	 			# The baseline core numbers
 	 			ocn = coreNumber(graph, nodes)
 
-	 			num = int(graph.number_of_edges()*y/100)
-	 			graph = removeEdges(graph, num)
+	 			if noise == 'edges':
+	 				num = int(graph.number_of_edges()*y/100)
+	 				graph = removeEdges(graph, num)
+	 			elif noise == 'nodes':
+	 				num = int(graph.number_of_nodes()*y/100)
+	 				graph = removeNodes(graph, num)
 
 	 			ncn = coreNumber(graph, nodes)
 
 	 			cor = compare(ocn, ncn, z)
 	 			tdata.append(cor)
 	 			#print(y, tdata)
+	 			data.append([x, y, z, cor])
+
+	 			if (y,z) not in cdata:
+		 			cdata[(y,z)] = []
+	 			cdata[(y,z)].append(np.mean(cor))
 
 	 		adata.append(np.mean(tdata))
+
 	 		#print(tdata)
 	 		x += 1
-	 	results[z] = np.mean(adata)
+	 	results[z] = (np.mean(adata), np.std(adata))
  		x += 1
 
  	#print('Mean Core Resilience: {} {}'.format(np.mean(adata), np.std(adata)))
  	#print('')
 
- 	saveRawData(sname, data, name, n)
+ 	saveRawData(sname, data, name, n, noise)
 
  	# Generate mean and std
  	tdata = []
  	for t in cdata:
  		tdata.append([t[0], t[1], np.mean(cdata[t]), np.std(cdata[t])])
- 	saveCompiledData(sname, tdata, name, n)
+ 	saveCompiledData(sname, tdata, name, n, noise)
 
 if __name__ == '__main__':
 	fname = sys.argv[1]
@@ -139,7 +167,8 @@ if __name__ == '__main__':
 	exp = int(sys.argv[3])
 	name = float(sys.argv[4])
 	n = int(sys.argv[5]) == 1
+	noise = sys.argv[6] # Edge or Node or both
 
 
-	main(fname, sname, exp, name, n)
+	main(fname, sname, exp, name, n, noise)
 
