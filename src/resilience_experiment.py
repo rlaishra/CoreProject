@@ -49,4 +49,5 @@ mode = 'alg_node'
 if __name__ == '__main__':
 	for i in xrange(0, len(fnames)):
 		command = 'python src/improve_resilience.py {} {} {} {}'.format(fnames[i], snames[i], k, mode)
+		print(command)
 		os.system(command)
