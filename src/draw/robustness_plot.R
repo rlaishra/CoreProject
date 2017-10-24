@@ -73,11 +73,14 @@ plotCoreDist <- function(fname, name) {
 
 plotCIDist <- function(fname, name) {
   data <- read.csv(fname, header = TRUE, sep = ',')
-  data <- data[which(data$ci > 1),]
+  #data <- data[which(data$ci > 1),]
+  data <- data[which(data$name == 0),]
+  
+  print(data)
   
   pl <- ggplot(data=data)
-  #pl <- pl + geom_bar(aes(x=ci))
-  pl <- pl + geom_bin2d(aes(x=core, y=ci))
+  pl <- pl + geom_bar(aes(x=ci))
+  #pl <- pl + geom_bin2d(aes(x=core, y=ci))
   #pl <- pl + geom_point(aes(x=core, y=ci))
   #pl <- pl + scale_y_log10()
   pl <- pl + facet_grid(. ~ name)

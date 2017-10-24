@@ -218,15 +218,18 @@ def _ciPriority(ci, cnumber, kcore, cd, u, v, n, m):
 	if cnumber[u] == cnumber[v]:
 		s1 = 0
 		s2 = 0
+		delta = []
 		if cnumber[u] > len(n[u]):
 			s1 += cd[u] - ci[u]
 			s1 -= cd[u] - cd[u] * (len(n[u]) + 1) / cnumber[u]
+			delta += [x for x in m[u]]
 			#s1 = s1 / len(m[u])
 			#print(s1)
 			#s1 = s1 * np.mean([ci[x] for x in m[u]])
 		if cnumber[v] > len(n[v]):
 			s2 += cd[v] - ci[v]
 			s2 -= cd[v] - cd[v] * (len(n[v]) + 1) / cnumber[v]
+			delta += [x for x in m[v]]
 			#s2 = s2 / len(m[v])
 			#print(s2)
 			#s2 = s2 * np.mean([ci[x] for x in m[v]])
@@ -234,7 +237,10 @@ def _ciPriority(ci, cnumber, kcore, cd, u, v, n, m):
 		#if u == 651 and v == 2044:
 		#	print('same', u, v, cnumber[u], n[u], n[v], m[u], m[v], ci[u], ci[v], cd[u], cd[v], s1, s2)
 		s = s1 + s2
-		return s1 + s2
+
+		if len(delta) > 0:
+			s = s * np.mean([cd[x] for x in set(delta)])
+		return s
 
 	if cnumber[u] < cnumber[v] and cnumber[u] > len(n[u]) and len(m[u]) > 0:
 		s = 0
@@ -249,7 +255,7 @@ def _ciPriority(ci, cnumber, kcore, cd, u, v, n, m):
 		vval = (cd[v] + s) * len(n[v])/cnumber[v]
 
 		if max(mvals) > vval:
-			return s
+			return s * np.mean([cd[x] for x in m[u]])
 		else:
 			return 0
 
@@ -266,7 +272,7 @@ def _ciPriority(ci, cnumber, kcore, cd, u, v, n, m):
 		vval = (cd[u] + s) * len(n[u])/cnumber[u]
 
 		if max(mvals) > vval:
-			return s
+			return s * np.mean([cd[x] for x in m[v]])
 		else:
 			return 0
 	
