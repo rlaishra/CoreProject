@@ -31,13 +31,10 @@ def _getSupportNodes(graph, cnumber, u):
 	whose removal will affect the core number of u
 	"""
 	n = [v for v in graph.neighbors(u) if cnumber[v] == cnumber[u]]
-
-	# Check if u relies on nodes with higher core number for its core number
-	if len(n) >= cnumber[u]:
-		return []
-
+	m = [v for v in graph.neighbors(u) if cnumber[v] > cnumber[u]]
+		
 	# Node u relies on higher nodes for its core number
-	return [v for v in graph.neighbors(u) if cnumber[v] > cnumber[u]]
+	return n, m
 
 
 
@@ -47,33 +44,41 @@ def getCoreInfluence(cnumber, kcore):
 	"""
 	knumber = [cnumber[u] for u in cnumber]
 	kmin = min(knumber)
-	kmax = min(knumber)
+	kmax = max(knumber)
 
-	iScore = {u:1 for u in cnumber}
+	ci = {u:1.0 for u in nodes}
+	cd = {u:0 for u in nodes}
+
 	empty = []
 	for k in xrange(kmin, kmax + 1):
 		# Nodes in the kcore
 		knodes = kcore[k].nodes()
+		knodes = [u for u in knodes if cnumber[u] == k]
 
-		for u in knodes:
-			supNodes = _getSupportNodes(kcore[k], cnumber, u)
-			if len(supNodes) < 1:
+		for u in set(knodes).intersection(nodes):
+			snodes, hnodes = _getSupportNodes(kcore[k], cnumber, u)
+
+			cd[u] = float(ci[u])
+			
+			if len(snodes) >= cnumber[u]:
 				empty.append(u)
 				continue
 
-			share = iScore[u]/len(supNodes)
-			for v in supNodes:
-				iScore[v] += share
-	
+			dif = ci[u]*(cnumber[u] - len(snodes))/cnumber[u]
+			ci[u] = ci[u] - dif
+			share = dif / len(hnodes)
+			for v in hnodes:
+				ci[v] += share
 
-	# Normalize between 0 and std
+	# Normalize so that sum is 1
+	#total = sum(iScore.values())
 	#imin = min(iScore.values())
 	#imax = max(iScore.values())
 
 	#for u in iScore:
-	#	iScore[u] = (iScore[u]-imin)/(imax - imin)
-
-	return iScore
+	#	iScore[u] = iScore[u]/total
+	#print(min(iScore.values()), max(iScore.values()))
+	return ci, cd
 
 
 def getCoreStrength(graph, cnumber):
@@ -105,7 +110,7 @@ def saveData(sname, data, name, n):
 	
 	writer = csv.writer(f, delimiter=',')
 	if n:
-		writer.writerow(['ci', 'cs', 'cr', 'name'])
+		writer.writerow(['ci', 'cs', 'cd', 'core', 'name'])
 	
 	for d in data:
 		writer.writerow(d + [name])
@@ -130,7 +135,7 @@ if __name__ == '__main__':
 	kcore = generateCoreSubgraph(graph, cnumber)
 
 	#graph = graph.subgraph(nodes)
-	ci = getCoreInfluence(cnumber, kcore)
+	ci, cd = getCoreInfluence(cnumber, kcore)
 	cs = getCoreStrength(graph, cnumber)
 
 	#iScore = {u:iScore[u] for u in nodes}
@@ -139,7 +144,7 @@ if __name__ == '__main__':
 	data = []
 
 	for u in nodes:
-		data.append([ci[u], cs[u], cnumber[u]])
+		data.append([ci[u], cs[u], cd[u], cnumber[u]])
 
 	saveData(sname, data, name, n)
 

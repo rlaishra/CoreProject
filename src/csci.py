@@ -38,13 +38,10 @@ def _getSupportNodes(graph, cnumber, u):
 	whose removal will affect the core number of u
 	"""
 	n = [v for v in graph.neighbors(u) if cnumber[v] == cnumber[u]]
-
-	# Check if u relies on nodes with higher core number for its core number
-	if len(n) >= cnumber[u]:
-		return []
-
+	m = [v for v in graph.neighbors(u) if cnumber[v] > cnumber[u]]
+		
 	# Node u relies on higher nodes for its core number
-	return [v for v in graph.neighbors(u) if cnumber[v] > cnumber[u]]
+	return n, m
 
 
 
@@ -54,23 +51,31 @@ def getCoreInfluence(cnumber, kcore):
 	"""
 	knumber = [cnumber[u] for u in cnumber]
 	kmin = min(knumber)
-	kmax = min(knumber)
+	kmax = max(knumber)
 
-	iScore = {u:1 for u in cnumber}
+	ci = {u:1.0 for u in nodes}
+	cd = {u:0 for u in nodes}
+
 	empty = []
 	for k in xrange(kmin, kmax + 1):
 		# Nodes in the kcore
 		knodes = kcore[k].nodes()
+		knodes = [u for u in knodes if cnumber[u] == k]
 
-		for u in knodes:
-			supNodes = _getSupportNodes(kcore[k], cnumber, u)
-			if len(supNodes) < 1:
+		for u in set(knodes).intersection(nodes):
+			snodes, hnodes = _getSupportNodes(kcore[k], cnumber, u)
+
+			cd[u] = 1 if len(snodes) >= cnumber[u] else 0
+			
+			if len(snodes) >= cnumber[u]:
 				empty.append(u)
 				continue
 
-			share = iScore[u]/len(supNodes)
-			for v in supNodes:
-				iScore[v] += share
+			dif = ci[u]*(cnumber[u] - len(snodes))/cnumber[u]
+			ci[u] = ci[u] - dif
+			share = dif / len(hnodes)
+			for v in hnodes:
+				ci[v] += share
 
 	# Normalize so that sum is 1
 	#total = sum(iScore.values())
@@ -80,7 +85,7 @@ def getCoreInfluence(cnumber, kcore):
 	#for u in iScore:
 	#	iScore[u] = iScore[u]/total
 	#print(min(iScore.values()), max(iScore.values()))
-	return iScore
+	return ci
 
 
 def getCoreStrength(graph, cnumber):
@@ -143,16 +148,23 @@ def removeNodes(graph, num):
 	return graph
 
 def compare(x1, x2, k):
-	sl = sorted(x1, key=x1.get, reverse=True)
+	sl = sorted([x1[u] for u in x1], reverse=True)
+	#sl = sorted(x1, key=x1.get, reverse=True)
 	#print(len(sl), k,  len(sl) * k / 100)
-	th = sl[int(len(sl) * k / 100)]
+	th = 1
+	if k < 100:
+		th = sl[int(len(sl) * k / 100)]
 
 	# Filter out nodes not in x2 from x1
+	#print(len(x1))
 	x1 = {u:x1[u] for u in x1 if u in x2}
 	ind = [u for u in x1 if x1[u] >= th]
 
+	#print(len(x1))
+
 	d1 = [x1[i] for i in ind] + [0]
 	d2 = [x2[i] for i in ind] + [0]
+	#print(d1)
 	#print(d1)
 	#print(d2)
 	cor, _ = stats.kendalltau(d1, d2, nan_policy='omit')
@@ -161,9 +173,9 @@ def compare(x1, x2, k):
 		cor = 1
 	return cor
 
-def computeResilience(graph, exp, a = 0):
-	k = [25, 10]
-	p = range(0,100,10)
+def computeResilience(graph, exp, a = 0, mode='edges'):
+	k = [50, 25, 100]
+	p = range(0,50,5)
 
 	results = {}
 
@@ -181,8 +193,12 @@ def computeResilience(graph, exp, a = 0):
 	 			# The baseline core numbers
 	 			ocn = coreNumber(graph, nodes)
 
-	 			num = int(graph.number_of_edges()*y/(100 * (1 + a/100)))
-	 			graph = removeEdges(graph, num)
+	 			if mode == 'edges':
+		 			num = int(graph.number_of_edges()*y/(100 * (1 + a/100)))
+		 			graph = removeEdges(graph, num)
+		 		elif mode == 'nodes':
+		 			num = int(graph.number_of_nodes()*y/(100 * (1 + a/100)))
+		 			graph = removeNodes(graph, num)
 
 	 			ncn = coreNumber(graph, nodes)
 
@@ -204,7 +220,8 @@ if __name__ == '__main__':
 	name = sys.argv[3]
 	n = int(sys.argv[4]) == 1
 	t = sys.argv[5] 			# Type of network
-	x = float(sys.argv[6])
+	mode = sys.argv[6]
+	x = float(sys.argv[7])
 
 	#k = 50
 
@@ -223,7 +240,7 @@ if __name__ == '__main__':
 	#graph = graph.subgraph(nodes)
 	ci = getCoreInfluence(cnumber, kcore)
 	cs = getCoreStrength(graph, cnumber)
-	results = computeResilience(graph, 10, 0)
+	results = computeResilience(graph, 10, x, mode)
 
 	# Means
 	ci_mean = np.mean(ci.values())
@@ -247,14 +264,14 @@ if __name__ == '__main__':
 	nod = [u for u in ci if ci[u] >= ci_th]
 	cs_t = [cs[u] for u in nod]
 	cs_m = np.mean(cs_t)
-	print('Top 5% CI CS: {} {}'.format(np.mean(cs_t), np.std(cs_t)))
+	#print('Top 5% CI CS: {} {}'.format(np.mean(cs_t), np.std(cs_t)))
 
 	cs_th = np.percentile(cs.values(), 95)
 	nod = [u for u in cs if cs[u] >= cs_th]
 	ci_t = [ci[u] for u in nod]
 	ci_m = np.mean(ci_t)
 	ci_s = np.std(ci_t)
-	print('Top 5% CS CI: {} {}'.format(np.mean(ci_t), np.std(ci_t)))
+	#print('Top 5% CS CI: {} {}'.format(np.mean(ci_t), np.std(ci_t)))
 	
 	data += [cs_m, ci_m]
 
@@ -262,6 +279,6 @@ if __name__ == '__main__':
 	for k in results:
 		d.append(data + [results[k][0], results[k][1],k])
 	
-	saveData(sname, d, 0)
+	saveData(sname, d, n)
 
 

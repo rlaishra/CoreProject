@@ -62,11 +62,25 @@ plotRCDIS <- function(fname, name, n) {
 
 plotCoreDist <- function(fname, name) {
   data <- read.csv(fname, header = TRUE, sep = ',')
-  data <- data[which(data$name == 0),]
+  #data <- data[which(data$name == 0),]
   
   pl <- ggplot(data=data)
-  pl <- pl + geom_bar(aes(x=cr))
+  pl <- pl + geom_bar(aes(x=core))
   pl <- pl + scale_y_log10()
+  pl <- pl + facet_grid(. ~ name)
+  return(pl)
+}
+
+plotCIDist <- function(fname, name) {
+  data <- read.csv(fname, header = TRUE, sep = ',')
+  data <- data[which(data$ci > 1),]
+  
+  pl <- ggplot(data=data)
+  #pl <- pl + geom_bar(aes(x=ci))
+  pl <- pl + geom_bin2d(aes(x=core, y=ci))
+  #pl <- pl + geom_point(aes(x=core, y=ci))
+  #pl <- pl + scale_y_log10()
+  pl <- pl + facet_grid(. ~ name)
   return(pl)
 }
 
@@ -229,7 +243,7 @@ plotTopCIRe <- function(fname, name) {
 
 resilianceChange <- function(fname, name, sname) {
   data <- read.csv(fname, header = TRUE, sep = ',')
-  data <- data[which(data$n %in% c(25)),]
+  data <- data[which(data$n %in% c(25, 50)),]
   #data <- data[which(data$name <= 2),]
   
   pl <- ggplot(data=data)
@@ -243,10 +257,11 @@ resilianceChange <- function(fname, name, sname) {
   pl <- pl + guides(fill=FALSE)
   #pl <- pl + labs(title = name, color='Algorithm')
   pl <- pl + labs(color='Algorithm')
+  pl <- pl + facet_grid(. ~ n)
   
-  tikz(file = sname, width = 4, height = 3, standAlone = TRUE)
-  print(pl)
-  dev.off()
+  #tikz(file = sname, width = 4, height = 3, standAlone = TRUE)
+  #print(pl)
+  #dev.off()
   
   return(pl)
 }

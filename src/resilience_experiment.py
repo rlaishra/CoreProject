@@ -23,27 +23,30 @@ fnames = [
 ]
 
 snames = [
-'outputs/oct_13/as19971108',
-'outputs/oct_13/as19971122',
-'outputs/oct_13/as19980201',
-'outputs/oct_13/as19980711',
-'outputs/oct_13/as19990217',
-'outputs/oct_13/as19990309',
-'outputs/oct_13/Oregon1_010331',
-'outputs/oct_13/Oregon1_010428',
-'outputs/oct_13/inf-openflights',
-'outputs/oct_13/inf-power',
-'outputs/oct_13/inf-USAir97',
-'outputs/oct_13/tech-pgp',
-'outputs/oct_13/tech-routers-rf',
-'outputs/oct_13/tech-WHOIS',
-'outputs/oct_13/p2p-Gnutella08',
-'outputs/oct_13/p2p-Gnutella09',
-'outputs/oct_13/p2p-Gnutella24',
-'outputs/oct_13/p2p-Gnutella25',
+'outputs/oct_23/resilience/as19971108',
+'outputs/oct_23/resilience/as19971122',
+'outputs/oct_23/resilience/as19980201',
+'outputs/oct_23/resilience/as19980711',
+'outputs/oct_23/resilience/as19990217',
+'outputs/oct_23/resilience/as19990309',
+'outputs/oct_23/resilience/Oregon1_010331',
+'outputs/oct_23/resilience/Oregon1_010428',
+'outputs/oct_23/resilience/inf-openflights',
+'outputs/oct_23/resilience/inf-power',
+'outputs/oct_23/resilience/inf-USAir97',
+'outputs/oct_23/resilience/tech-pgp',
+'outputs/oct_23/resilience/tech-routers-rf',
+'outputs/oct_23/resilience/tech-WHOIS',
+'outputs/oct_23/resilience/p2p-Gnutella08',
+'outputs/oct_23/resilience/p2p-Gnutella09',
+'outputs/oct_23/resilience/p2p-Gnutella24',
+'outputs/oct_23/resilience/p2p-Gnutella25',
 ]
+
+k = 25
+mode = 'alg_node'
 
 if __name__ == '__main__':
 	for i in xrange(0, len(fnames)):
-		command = 'python src/improve_robustness.py {} {} 25 alg'.format(fnames[i], snames[i])
+		command = 'python src/improve_resilience.py {} {} {} {}'.format(fnames[i], snames[i], k, mode)
 		os.system(command)
