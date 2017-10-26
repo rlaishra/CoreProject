@@ -216,8 +216,11 @@ def _ciPriority(ci, cnumber, kcore, cd, u, v, n, m):
 	"""
 
 	if cnumber[u] == cnumber[v]:
-		s1 = 0
-		s2 = 0
+		s1 = [ci[x] for x in n[u] ] + [ci[x] for x in m[u]]
+		s2 = [ci[x] for x in n[v] ] + [ci[x] for x in m[v]]
+
+		return np.mean(s1) + np.mean(s2)
+
 		delta = []
 		if cnumber[u] > len(n[u]):
 			s1 += cd[u] - ci[u]
@@ -241,6 +244,16 @@ def _ciPriority(ci, cnumber, kcore, cd, u, v, n, m):
 		if len(delta) > 0:
 			s = s * np.mean([cd[x] for x in set(delta)])
 		return s
+
+	if cnumber[u] < cnumber[v]:
+		s = [ci[x] for x in n[u] ] + [ci[x] for x in m[u]]
+		return np.mean(s)
+
+	if cnumber[u] > cnumber[v]:
+		s = [ci[x] for x in n[v] ] + [ci[x] for x in m[v]]
+		return np.mean(s)
+
+	return 0
 
 	if cnumber[u] < cnumber[v] and cnumber[u] > len(n[u]) and len(m[u]) > 0:
 		s = 0
@@ -320,7 +333,7 @@ def getCoreInfluence(cnumber, kcore, nodes=None):
 			if len(hnodes) > 0:	
 				dif = ci[u]*(cnumber[u] - len(snodes))/cnumber[u]
 				#print(dif)
-				ci[u] = ci[u] - dif
+				#ci[u] = ci[u] - dif
 				share = dif / len(hnodes)
 
 				#if u == 651:
@@ -786,13 +799,15 @@ def main(fname, sname, k=None, m=10, mode='alg_edge'):
 	step = int(graph.number_of_edges()/400)
 
 	if mode == 'alg_edge' or mode == 'alg_node' or mode == 'alg_both':
-		nodes = set([u for u in cnumber if cnumber[u] >= cutoff])
+		nodes = set([u for u in cnumber if cnumber[u] > cutoff])
 	elif mode == 'core':
 		nodes = set(sorted(cnumber, key=cnumber.get, reverse=True)[0:int(len(cnumber)*0.1)])
 	elif mode == 'degree':
 		nodes = set(sorted(degree, key=degree.get, reverse=True)[0:int(len(degree)*0.1)])
 	elif mode == 'random':
 		nodes = set(random.sample(cnumber.keys(), int(len(degree)*0.1)))
+	elif mode == 'oracle':
+		nodes = set([u for u in cnumber if cnumber[u] > cutoff])
 
 	mcd = computeMCD(graph, cnumber)
 	pc = generatePureCore(graph, cnumber, mcd)
@@ -809,20 +824,25 @@ def main(fname, sname, k=None, m=10, mode='alg_edge'):
 
 	if mode == 'alg_edge' or mode == 'alg_node' or mode == 'alg_both':
 		nedges = edgePriority(nedges, cnumber, cs, ci, cd, kcore, mode)
-	else:
+	elif mode == 'random' or mode == 'core' or mode == 'random':
 		nedges = baselinePriority(nedges, cnumber, degree, mode)
+	elif mode == 'oracle':
+		nedges = list(nedges)
 
 	i = 0
 
 	# Original graph
-	tsname = sname + '_' + mode + '_' + '_k_' + str(k) + '_0.0.csv'
-	nx.write_edgelist(graph, tsname, data=False)
+	if mode != 'oracle':
+		tsname = sname + '_' + mode + '_' + '_k_' + str(k) + '_0.0.csv'
+		nx.write_edgelist(graph, tsname, data=False)
 
 	while len(nedges) > 0 and i <= m*step:
+		#if i <= m*step and mode != 'oracle':
+		#	break
 		e = nedges.pop(0)
 
-		if _checkIfCoreNumberChange(graph, cnumber, e):
-			continue
+		#if _checkIfCoreNumberChange(graph, cnumber, e):
+		#	continue
 
 		#print(cnumber[e[0]], cnumber[e[1]])
 
@@ -830,7 +850,8 @@ def main(fname, sname, k=None, m=10, mode='alg_edge'):
 		graph_matrix[e[0],e[1]] = 1
 		graph_matrix[e[1],e[0]] = 1
 		
-		i += 1
+		if mode != 'oracle':
+			i += 1
 
 		mcd = updateMCD(graph, cnumber, mcd, e)
 		pc = updatePureCore(graph, cnumber, mcd, pc, e)
@@ -843,10 +864,12 @@ def main(fname, sname, k=None, m=10, mode='alg_edge'):
 			cs = getCoreStrength(graph, cnumber)
 			ci, cd = getCoreInfluence(cnumber, kcore)
 			nedges = edgePriority(nedges, cnumber, cs, ci, cd, kcore, mode)
+		elif mode == 'oracle':
+			nedges = list(nedges)
 		else:
 			nedges = baselinePriority(nedges, cnumber, graph.degree(), mode=mode)
 
-		if i%step == 0:
+		if i%step == 0 and mode != 'oracle':
 			tsname = sname + '_' + mode + '_'  + '_k_' + str(k) + '_' + str(float(i/(step*4))) + '.csv'
 			#print('Number of candidate: {} {}'.format(len(nedges), len(oedges)))
 			print('Saving: {}'.format(tsname))
@@ -856,6 +879,18 @@ def main(fname, sname, k=None, m=10, mode='alg_edge'):
 			t1 = time.time()
 			t.append(t1-t0)
 			print('Time: {}'.format(t[-1]))
+
+		if i%1000 and mode == 'oracle':
+			print('Edges left: {]'.format(len(nedges)))
+			print(nx.info(graph))
+
+	if mode == 'oracle':
+		tsname = sname + '_oracle.csv'
+		#print('Number of candidate: {} {}'.format(len(nedges), len(oedges)))
+		print('Saving: {}'.format(tsname))
+		print(nx.info(graph))
+		nx.write_edgelist(graph, tsname, data=False)
+
 	print(t, file=open(sname+'_time','w'))
 
 

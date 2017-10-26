@@ -135,23 +135,51 @@ plotMeanCSRe <- function(fname, sname) {
   return(p)
 }
 
-plotMeanCIRe <- function(fname, sname) {
+plotCIRe <- function(fname, sname) {
   data <- read.csv(fname, header = TRUE, sep = ',')
-  #data <- data[which(data$n %in% c(50,100)),]
+  data <- data[which(data$n %in% c(25)),]
   
-  p <- ggplot(data=data)
+  p1 <- ggplot(data=data)
+  p2 <- ggplot(data=data)
+  p3 <- ggplot(data=data)
   
-  p <- p + geom_point(aes(x=sqrt(cst_mean), y=cr, color=type))
-  p <- p + xlab(TeX('$\\sqrt{C_{95}(G)}$')) + ylab(TeX('$R_{p}^{0,100}(G)$'))
-  p <- p + theme_bw()
-  p <- p + facet_grid(. ~ n)
+  p1 <- p1 + geom_point(aes(x=cst_mean, y=cr, color=type))
+  p1 <- p1 + geom_errorbar(aes(x=cst_mean, ymin=cr-cr_s, ymax=cr + cr_s, color=type))
+  #p1 <- p1 + xlab(TeX('$\\frac{\\bar{CI_{95}(G)}}{\\bar{CI(G)}$')) + ylab(TeX('$R_{p}^{0,50}(G)$'))
+  p1 <- p1 + xlab(TeX('$\\bar{CS_{95}(G)}')) + ylab(TeX('$R_{p}^{0,50}(G)$'))
+  p1 <- p1 + theme_bw()
+  p1 <- p1 + scale_x_log10()
+  p1 <- p1 + facet_grid(.~n)
   
-  d <- data[which(data$n==25),]
-  print(cor.test(d$cr, sqrt(d$cst_mean)))
+  return(p1)
+  
+  p2 <- p2 + geom_point(aes(x=k_shell, y=cr, color=type))
+  p2 <- p2 + geom_errorbar(aes(x=k_shell, ymin=cr-cr_s, ymax=cr + cr_s, color=type))
+  p2 <- p2 + xlab(TeX('Fraction of nodes with CI greater than \\bar{CI}')) + ylab(TeX('$R_{p}^{0,50}(G)$'))
+  p2 <- p2 + theme_bw()
+  p2 <- p2 + scale_x_log10()
+  p2 <- p2 + facet_grid(.~n)
+  #p2 <- p2 + scale_x_log10()
+  
+  p3 <- p3 + geom_point(aes(x=cs_mean, y=cr, color=type))
+  #p2 <- p2 + geom_errorbar(aes(x=ci_mean, ymin=cr-cr_s, ymax=cr + cr_s, color=type))
+  p3 <- p3 + xlab(TeX('$\\sigma^2(CI)$')) + ylab(TeX('$R_{p}^{0,25}(G)$'))
+  p3 <- p3 + theme_bw()
+  p3 <- p3 + scale_x_log10()
+  
+  #return(p2)
+  
+  #p <- p + scale_x_log10()
+  #p <- p + facet_grid(. ~ n)
+  
+  #d <- data[which(data$n==25),]
+  #print(cor.test(data$cr, data$ci_perc))
   
   #tikz(file = sname, width = 2, height = 2, standAlone = TRUE)
   #print(p)
   #dev.off()
+  
+  p <- grid.arrange(p1,p2,ncol=1)
   
   return(p)
 }
@@ -198,14 +226,14 @@ plotMeanCICSRe <- function(fname, sname) {
 plotMeanCICS <- function(fname, sname) {
   data <- read.csv(fname, header = TRUE, sep = ',')
   p <- ggplot(data=data)
-  p <- p + geom_point(aes(x=csm, y=cim, color=rem))
+  p <- p + geom_point(aes(x=ci_perc, y=cim, color=rem))
   p <- p + ylab('Mean Core Influence') + ylab('Mean Core Strength')
   p <- p + scale_x_log10() 
   p <- p + theme_bw()
   
-  tikz(file = sname, width = 2, height = 2, standAlone = TRUE)
-  print(pl)
-  dev.off()
+  #tikz(file = sname, width = 2, height = 2, standAlone = TRUE)
+  #print(pl)
+  #dev.off()
   
   return(p)
 }

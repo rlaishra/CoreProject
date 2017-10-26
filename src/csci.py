@@ -59,6 +59,9 @@ def getCoreInfluence(cnumber, kcore):
 	empty = []
 	for k in xrange(kmin, kmax + 1):
 		# Nodes in the kcore
+		if k not in kcore:
+			continue
+
 		knodes = kcore[k].nodes()
 		knodes = [u for u in knodes if cnumber[u] == k]
 
@@ -72,7 +75,8 @@ def getCoreInfluence(cnumber, kcore):
 				continue
 
 			dif = ci[u]*(cnumber[u] - len(snodes))/cnumber[u]
-			ci[u] = ci[u] - dif
+			#ci[u] = ci[u] - dif
+			#dif = ci[u]
 			share = dif / len(hnodes)
 			for v in hnodes:
 				ci[v] += share
@@ -118,7 +122,7 @@ def saveData(sname, data, n):
 	
 	writer = csv.writer(f, delimiter=',')
 	if n:
-		writer.writerow(['type','name','ci_mean', 'cs_mean', 'ci_perc','cs_perc', 'cst_mean', 'cit_mean', 'cr', 'cr_s', 'n'])
+		writer.writerow(['type','name','ci_mean', 'cs_mean', 'ci_perc','cs_perc', 'cst_mean', 'cit_mean', 'k_shell', 'cr', 'cr_s', 'n'])
 	
 	for d in data:
 		writer.writerow(d)
@@ -158,7 +162,7 @@ def compare(x1, x2, k):
 	# Filter out nodes not in x2 from x1
 	#print(len(x1))
 	x1 = {u:x1[u] for u in x1 if u in x2}
-	ind = [u for u in x1 if x1[u] >= th]
+	ind = [u for u in x1 if x1[u] > th]
 
 	#print(len(x1))
 
@@ -174,8 +178,8 @@ def compare(x1, x2, k):
 	return cor
 
 def computeResilience(graph, exp, a = 0, mode='edges'):
-	k = [50, 25, 100]
-	p = range(0,50,5)
+	k = [25, 50, 100]
+	p = range(0,51,10)
 
 	results = {}
 
@@ -199,6 +203,9 @@ def computeResilience(graph, exp, a = 0, mode='edges'):
 		 		elif mode == 'nodes':
 		 			num = int(graph.number_of_nodes()*y/(100 * (1 + a/100)))
 		 			graph = removeNodes(graph, num)
+		 		else:
+		 			print('Incorrect Mode')
+		 			return False
 
 	 			ncn = coreNumber(graph, nodes)
 
@@ -227,12 +234,13 @@ if __name__ == '__main__':
 
 	# Generate nodes list
 	graph = readGraph(fname)
+	node_count = graph.number_of_nodes()
 	print(nx.info(graph))
 	cnumber = nx.core_number(graph)
 	#cutoff = sorted(cnumber.values(), reverse=True)[int(len(cnumber)*k/100)]
 	#print('Cutoff', cutoff)
 	cutoff = 0
-	nodes = [u for u in graph.nodes() if cnumber[u] >= cutoff]
+	nodes = [u for u in graph.nodes() if cnumber[u] > cutoff]
 
 	cnumber = nx.core_number(graph)
 	kcore = generateCoreSubgraph(graph, cnumber)
@@ -240,13 +248,16 @@ if __name__ == '__main__':
 	#graph = graph.subgraph(nodes)
 	ci = getCoreInfluence(cnumber, kcore)
 	cs = getCoreStrength(graph, cnumber)
-	results = computeResilience(graph, 10, x, mode)
+	results = computeResilience(graph, 5, x, mode)
 
 	# Means
 	ci_mean = np.mean(ci.values())
 	cs_mean = np.mean(cs.values())
 
 	# Medians
+	ci_mean = len([u for u in ci if ci[u] > ci_mean])/node_count
+	#cs_mean = np.var(ci.values())
+
 	ci_perc = np.percentile(ci.values(),95)
 	cs_perc = np.percentile(cs.values(),95)
 
@@ -261,19 +272,23 @@ if __name__ == '__main__':
 
 	# Mean CS of top 95 percentile CI
 	ci_th = np.percentile(ci.values(), 95)
-	nod = [u for u in ci if ci[u] >= ci_th]
+	#nod = [ci[u] for u in ci if ci[u] > ci_th]
+	nod = [u for u in ci if ci[u] > ci_th]
 	cs_t = [cs[u] for u in nod]
 	cs_m = np.mean(cs_t)
-	#print('Top 5% CI CS: {} {}'.format(np.mean(cs_t), np.std(cs_t)))
+	print('Top 5% CI CS: {} {}'.format(np.mean(cs_t), np.std(cs_t)))
 
-	cs_th = np.percentile(cs.values(), 95)
-	nod = [u for u in cs if cs[u] >= cs_th]
-	ci_t = [ci[u] for u in nod]
-	ci_m = np.mean(ci_t)
+	#cs_th = np.percentile(cs.values(), 95)
+	#nod = [u for u in cs if cs[u] > cs_th]
+	ci_t = [ci[u] for u in ci if ci[u] > ci_th]
+	ci_m = np.mean(ci_t)/np.mean(ci.values())
 	ci_s = np.std(ci_t)
-	#print('Top 5% CS CI: {} {}'.format(np.mean(ci_t), np.std(ci_t)))
+	print('Top 5% CS CI: {} {}'.format(np.mean(ci_t), np.std(ci_t)))
 	
 	data += [cs_m, ci_m]
+
+	# Number of k-shells
+	data += [len(set(cnumber.values()))]
 
 	d = []
 	for k in results:
