@@ -2,17 +2,17 @@ import sys
 import os
 
 fnames = [
-#'data/as-733/as19971108.txt',
+'data/as-733/as19971108.txt',
 'data/as-733/as19990309.txt',
 'data/Oregon1_010331.txt',
 'data/Oregon1_010428.txt',
-#'data/inf-openflights/inf-openflights.edges',
+'data/inf-openflights/inf-openflights.edges',
 'data/inf-power/inf-power.mtx',
 'data/inf-USAir97/inf-USAir97.csv',
 'data/tech-pgp/tech-pgp.edges',
-#'data/tech-routers-rf/tech-routers-rf.mtx',
+'data/tech-routers-rf/tech-routers-rf.mtx',
 'data/tech-WHOIS/tech-WHOIS.mtx',
-#'data/p2p-Gnutella08.csv',
+'data/p2p-Gnutella08.csv',
 'data/p2p-Gnutella09.csv',
 'data/p2p-Gnutella25.txt',
 'data/web-spam/web-spam.mtx',
@@ -28,32 +28,32 @@ fnames = [
 ]
 
 snames = [
-#'outputs/oct_24/data/as19971108',
-'outputs/oct_24/data/as19990309',
-'outputs/oct_24/data/Oregon1_010331',
-'outputs/oct_24/data/Oregon1_010428',
-#'outputs/oct_24/data/inf-openflights',
-'outputs/oct_24/data/inf-power',
-'outputs/oct_24/data/inf-USAir97',
-'outputs/oct_24/data/tech-pgp',
-#'outputs/oct_24/data/tech-routers-rf',
-'outputs/oct_24/data/tech-WHOIS',
-#'outputs/oct_24/data/p2p-Gnutella08',
-'outputs/oct_24/data/p2p-Gnutella09',
-'outputs/oct_24/data/p2p-Gnutella25',
-'outputs/oct_24/data/web-spam',
-'outputs/oct_24/data/web-webbase-2001',
-'outputs/oct_24/data/ca-grqc',
-'outputs/oct_24/data/ca-HepTh',
-'outputs/oct_24/data/ca-Erdos992',
-'outputs/oct_24/data/soc-hamsterster',
-'outputs/oct_24/data/soc-advogato',
-'outputs/oct_24/data/soc-wiki-Vote',
-'outputs/oct_24/data/bio-dmela',
-'outputs/oct_24/data/bio-yeast-protein-inter'
+'outputs/oct_27/data/as19971108',
+'outputs/oct_27/data/as19990309',
+'outputs/oct_27/data/Oregon1_010331',
+'outputs/oct_27/data/Oregon1_010428',
+'outputs/oct_27/data/inf-openflights',
+'outputs/oct_27/data/inf-power',
+'outputs/oct_27/data/inf-USAir97',
+'outputs/oct_27/data/tech-pgp',
+'outputs/oct_27/data/tech-routers-rf',
+'outputs/oct_27/data/tech-WHOIS',
+'outputs/oct_27/data/p2p-Gnutella08',
+'outputs/oct_27/data/p2p-Gnutella09',
+'outputs/oct_27/data/p2p-Gnutella25',
+'outputs/oct_27/data/web-spam',
+'outputs/oct_27/data/web-webbase-2001',
+'outputs/oct_27/data/ca-grqc',
+'outputs/oct_27/data/ca-HepTh',
+'outputs/oct_27/data/ca-Erdos992',
+'outputs/oct_27/data/soc-hamsterster',
+'outputs/oct_27/data/soc-advogato',
+'outputs/oct_27/data/soc-wiki-Vote',
+'outputs/oct_27/data/bio-dmela',
+'outputs/oct_27/data/bio-yeast-protein-inter'
 ]
 
-k = 25
+k = 100
 
 if __name__ == '__main__':
 	mode = sys.argv[1]
