@@ -147,8 +147,11 @@ def removeEdges(graph, num):
 def removeNodes(graph, num):
 	nodes = list(graph.nodes())
 	random.shuffle(nodes)
-	remove = nodes[:num]
-	graph.remove_nodes_from(remove)
+	rnodes= nodes[:num]
+	redges = []
+	for u in rnodes:
+		redges += list([(u,v) for v in graph.neighbors(u)])
+	graph.remove_edges_from(redges)
 	return graph
 
 def compare(x1, x2, k):

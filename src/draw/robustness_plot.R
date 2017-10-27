@@ -143,14 +143,14 @@ plotCIRe <- function(fname, sname, name) {
   p2 <- ggplot(data=data)
   p3 <- ggplot(data=data)
   
-  #p1 <- p1 + geom_point(aes(x=cst_mean, y=cr, color=type))
-  #p1 <- p1 + geom_errorbar(aes(x=cst_mean, ymin=cr-cr_s, ymax=cr + cr_s, color=type))
-  p1 <- p1 + geom_point(aes(x=cit_mean, y=cr, color=type))
-  p1 <- p1 + geom_errorbar(aes(x=cit_mean, ymin=cr-cr_s, ymax=cr + cr_s, color=type))
-  p1 <- p1 + xlab(TeX('$\\frac{\\bar{CI_{95}(G)}}{\\bar{CI(G)}$')) + ylab(TeX('$R_{p}^{e(0,50)}(G)$'))
-  #p1 <- p1 + xlab(TeX('$\\bar{CS_{95}(G)}')) + ylab(TeX('$R_{p}^{e(0,50)}(G)$'))
+  p1 <- p1 + geom_point(aes(x=cst_mean, y=cr, color=type))
+  p1 <- p1 + geom_errorbar(aes(x=cst_mean, ymin=cr-cr_s, ymax=cr + cr_s, color=type))
+  #p1 <- p1 + geom_point(aes(x=cit_mean, y=cr, color=type))
+  #p1 <- p1 + geom_errorbar(aes(x=cit_mean, ymin=cr-cr_s, ymax=cr + cr_s, color=type))
+  #p1 <- p1 + xlab(TeX('$\\frac{\\bar{CI_{95}(G)}}{\\bar{CI(G)}$')) + ylab(TeX('$R_{p}^{e(0,50)}(G)$'))
+  p1 <- p1 + xlab(TeX('$\\bar{CS_{95}(G)}')) + ylab(TeX('$R_{p}^{n(0,50)}(G)$'))
   p1 <- p1 + theme_bw()
-  #p1 <- p1 + scale_x_log10()
+  p1 <- p1 + scale_x_log10()
   p1 <- p1 + labs(title = name, color='Network Type')
   p1 <- p1 + theme(legend.position="bottom")
   p1 <- p1 + facet_grid(.~n)
@@ -279,7 +279,7 @@ plotTopCIRe <- function(fname, name) {
 resilianceChange <- function(fname, name, sname) {
   data <- read.csv(fname, header = TRUE, sep = ',')
   data <- data[which(data$n %in% c(25, 50, 100)),]
-  #data <- data[which(data$name <= 2),]
+  data <- data[which(data$name <= 2),]
   
   pl <- ggplot(data=data)
   

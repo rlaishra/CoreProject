@@ -208,17 +208,36 @@ def updateCoreInfluence(graph, cnumber, kcore, ci, cd, edge):
 
 	return ci
 
-def _ciPriority(ci, cnumber, kcore, cd, u, v, n, m):
+def _ciPriority(ci, cs, cnumber, kcore, cd, u, v, n, m, model='random'):
 	"""
 	Returns the combined decrease in ci of higher core number nodes
 	if u and v are connected
 	"""
+	epsilon = 0.001
+	p = 0
+
+	if cnumber[u] >= cnumber[v]:
+		s = [ci[x] for x in n[v] ] + [ci[x] for x in m[v]]
+		d = ci[v]/(cs[v] + epsilon)
+		p += np.mean(s) * d
+
+
+	if cnumber[u] <= cnumber[v]:
+		s = [ci[x] for x in n[u] ] + [ci[x] for x in m[u]]
+		d = ci[u]/(cs[u] + epsilon)
+		p += np.mean(s) * d
+
+	return p
+
 
 	if cnumber[u] == cnumber[v]:
 		s1 = [ci[x] for x in n[u] ] + [ci[x] for x in m[u]]
 		s2 = [ci[x] for x in n[v] ] + [ci[x] for x in m[v]]
 
-		return np.mean(s1) + np.mean(s2)
+		d1 = ci[u]/(cs[u] + epsilon)
+		d2 = ci[v]/(cs[v] + epsilon)
+
+		return np.mean(s1)  + np.mean(s2)
 
 		delta = []
 		if cnumber[u] > len(n[u]):
@@ -395,6 +414,29 @@ def baselinePriority(nedges, cnumber, degree, mode='random'):
 
 def edgePriority(nedges, cnumber, cs, ci, cd, kcore, mode='alg_edge'):
 	priority = {}
+	n = {}
+	m = {}
+	
+	for u in cnumber:
+		n[u], m[u] = _getSupportNodes(kcore[cnumber[u]], cnumber, u)
+
+	for e in nedges:
+		e = list(e)
+		u = e[0]
+		v = e[1]
+
+		#if u == 651 or u == 2044:
+		#	print(u, cnumber[u], n[u], m[u], ci[u], cd[u], cs[u])
+
+		priority[(u,v)] = _ciPriority(ci, cs, cnumber, kcore, cd, u, v, n, m)
+
+	edges = sorted(priority, key=priority.get, reverse=True)
+	print(len(edges), len(nedges))
+
+	print('Prioritiy', priority[edges[0]], edges[0], cnumber[edges[0][0]], cnumber[edges[0][1]])
+	return edges
+
+
 	epsilon = 0.001
 	
 	if mode == 'alg_edge':
@@ -778,6 +820,19 @@ def getShellConnectedComponents(graph, cnumber, candidates=None):
 
 	return nodes
 
+def deprioritize(nedges, nodes):
+	"""
+	Deprioritize edges containing nodes
+	"""
+	dep = []
+	for e in nedges:
+		if e[0] in nodes or e[1] in nodes:
+			dep.append(e)
+			nedges.remove(e)
+
+	nedges += dep
+	return nedges
+
 def main(fname, sname, k=None, m=10, mode='alg_edge'):
 	"""
 	fname 	: The original data file
@@ -818,7 +873,7 @@ def main(fname, sname, k=None, m=10, mode='alg_edge'):
 	step = int(graph.number_of_edges()/400)
 
 	if mode == 'alg_edge' or mode == 'alg_node' or mode == 'alg_both':
-		nodes = set([u for u in cnumber if cnumber[u] > cutoff])
+		nodes = set([u for u in cnumber if cnumber[u] >= cutoff])
 	elif mode == 'core':
 		nodes = set(sorted(cnumber, key=cnumber.get, reverse=True)[0:int(len(cnumber)*0.1)])
 	elif mode == 'degree':
@@ -826,7 +881,7 @@ def main(fname, sname, k=None, m=10, mode='alg_edge'):
 	elif mode == 'random':
 		nodes = set(random.sample(cnumber.keys(), int(len(degree)*0.1)))
 	elif mode == 'oracle':
-		nodes = set([u for u in cnumber if cnumber[u] > cutoff])
+		nodes = set([u for u in cnumber if cnumber[u] >= cutoff])
 
 	mcd = computeMCD(graph, cnumber)
 	pc = generatePureCore(graph, cnumber, mcd)
@@ -855,10 +910,17 @@ def main(fname, sname, k=None, m=10, mode='alg_edge'):
 		tsname = sname + '_' + mode + '_' + '_k_' + str(k) + '_0.0.csv'
 		nx.write_edgelist(graph, tsname, data=False)
 
+	cnodes = []
+	cedges = []
 	while len(nedges) > 0 and i <= m*step:
 		#if i <= m*step and mode != 'oracle':
 		#	break
 		e = nedges.pop(0)
+		if e[0] in cnodes or e[0] in cnodes:
+			cedges.append(e)
+			continue
+		else:
+			cnodes += [e[0], e[1]]
 
 		#if _checkIfCoreNumberChange(graph, cnumber, e):
 		#	continue
@@ -872,17 +934,31 @@ def main(fname, sname, k=None, m=10, mode='alg_edge'):
 		if mode != 'oracle':
 			i += 1
 
-		mcd = updateMCD(graph, cnumber, mcd, e)
-		pc = updatePureCore(graph, cnumber, mcd, pc, e)
-		nedges = updateCandidateEdges(graph, nedges, cnumber, pc, e)
-		#nedges = pruneCandidateEdges(graph, nedges, cnumber, pc)
+		if i%10 == 0:
+			#mcd = updateMCD(graph, cnumber, mcd, e)
+			#pc = updatePureCore(graph, cnumber, mcd, pc, e)
+			#nedges = updateCandidateEdges(graph, nedges, cnumber, pc, e)
+
+			nedges = nedges + cedges
+			cedges = []
+			cnodes = []
+
+			mcd = computeMCD(graph, cnumber)
+			pc = generatePureCore(graph, cnumber, mcd)
+			nedges = pruneCandidateEdges(graph, nedges, cnumber, pc)
 
 		if mode == 'alg_edge' or mode == 'alg_node' or mode == 'alg_both':
 			#kcore = generateCoreSubgraph(graph, cnumber)
-			kcore = updateCoreSubgraph(kcore, cnumber, e[0], e[1])
-			cs = getCoreStrength(graph, cnumber)
-			ci, cd = getCoreInfluence(cnumber, kcore)
-			nedges = edgePriority(nedges, cnumber, cs, ci, cd, kcore, mode)
+			if i % 10 == 0:
+				#kcore = updateCoreSubgraph(kcore, cnumber, e[0], e[1])
+				kcore = generateCoreSubgraph(graph, cnumber)
+				cs = getCoreStrength(graph, cnumber)
+				ci, cd = getCoreInfluence(cnumber, kcore)
+				nedges = edgePriority(nedges, cnumber, cs, ci, cd, kcore, mode)
+				#cnodes = []
+			#else:
+			#	cnodes += [e[0], e[1]]
+			#	nedges = deprioritize(nedges, cnodes)
 		elif mode == 'oracle':
 			nedges = list(nedges)
 		else:
