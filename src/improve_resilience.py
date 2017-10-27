@@ -796,8 +796,8 @@ def main(fname, sname, k=None, m=10, mode='alg_edge'):
 
 	print(nx.info(graph))
 
-	#graph_matrix = nx.to_numpy_matrix(graph)
-	#graph = nx.from_numpy_matrix(graph_matrix)
+	graph_matrix = nx.to_numpy_matrix(graph)
+	graph = nx.from_numpy_matrix(graph_matrix)
 	#graph_matrix = sparse.csr_matrix(graph_matrix)
 
 	cnumber = nx.core_number(graph)
