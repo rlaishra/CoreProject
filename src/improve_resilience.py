@@ -449,11 +449,12 @@ def edgePriority(nedges, cnumber, cs, ci, cd, kcore, mode='alg_edge'):
 			#print(ci[v], ci[u], cd[v], cd[u])
 
 	edges = sorted(priority, key=priority.get, reverse=True)
+	print(len(edges), len(nedges))
 
 	print('Prioritiy', priority[edges[0]], edges[0], cnumber[edges[0][0]], cnumber[edges[0][1]])
 	return edges
 
-"""
+
 def checkCoreChangeMat(mat, edges, cnumber):
 	nodes = []
 	for e in edges:
@@ -511,7 +512,6 @@ def checkCoreChangeMat(mat, edges, cnumber):
 
 	return whitelist
 
-"""
 
 def edgeGroups(edges, cnumber, graph, pc):	
 	# Set of edges where the endpoints have same core number
@@ -623,10 +623,9 @@ def _checkIfCoreNumberChange(graph, cnumber, edges):
 	#print('Number of edges', graph.number_of_edges())
 	
 	changed = []
-	for u in nodes:
+	for u in graph.nodes():
 		if cnumber[u] != tcore[u]:
 			changed.append(u)
-
 
 	whitelist = []
 
@@ -672,7 +671,7 @@ def pruneCandidateEdges(graph, nedges, cnumber, pc):
 	Remove the edges which will change core number
 	"""
 
-	#mat = nx.to_numpy_matrix(graph)
+	mat = nx.to_numpy_matrix(graph)
 	#mat = sparse.csr_matrix(mat)
 
 	print('Edges before pruning: {}'.format(len(nedges)))
@@ -684,8 +683,9 @@ def pruneCandidateEdges(graph, nedges, cnumber, pc):
 	edges = set([])
 	for i in xrange(0, len(edge_group)):
 		e = edge_group[i]
-		#whitelist = checkCoreChangeMat(mat, e, cnumber)
-		whitelist = _checkIfCoreNumberChange(graph, cnumber, e)
+		#whitelist = _checkIfCoreNumberChange(graph, cnumber, e)
+		whitelist = checkCoreChangeMat(mat, e, cnumber)
+		#print('whitelist', len(whitelist1), len(whitelist))
 		edges.update(whitelist)
 
 		if i % 500 == 0:
@@ -841,6 +841,7 @@ def main(fname, sname, k=None, m=10, mode='alg_edge'):
 	print('Number of candidate: {}'.format(len(nedges)))
 
 	if mode == 'alg_edge' or mode == 'alg_node' or mode == 'alg_both':
+		print(len(nedges))
 		nedges = edgePriority(nedges, cnumber, cs, ci, cd, kcore, mode)
 	elif mode == 'random' or mode == 'core' or mode == 'random':
 		nedges = baselinePriority(nedges, cnumber, degree, mode)
@@ -865,8 +866,8 @@ def main(fname, sname, k=None, m=10, mode='alg_edge'):
 		#print(cnumber[e[0]], cnumber[e[1]])
 
 		graph.add_edge(e[0],e[1])
-		#graph_matrix[e[0],e[1]] = 1
-		#graph_matrix[e[1],e[0]] = 1
+		graph_matrix[e[0],e[1]] = 1
+		graph_matrix[e[1],e[0]] = 1
 		
 		if mode != 'oracle':
 			i += 1

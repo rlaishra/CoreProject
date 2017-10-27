@@ -53,7 +53,7 @@ snames = [
 'outputs/oct_27/data/bio-yeast-protein-inter'
 ]
 
-k = 100
+k = 25
 
 if __name__ == '__main__':
 	mode = sys.argv[1]
