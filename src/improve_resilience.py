@@ -139,7 +139,6 @@ def generatePureCore(graph, cnumber, mcd, nodes=None):
 	
 	return pc
 
-
 def updateCoreStrength(graph, cnumber, cs, edge):
 	nodes  = [u for u in cs if e in edge]
 	csn = getCoreStrength(graph, cnumber, nodes, normalize=False)
@@ -312,6 +311,9 @@ def getCoreInfluence(cnumber, kcore, nodes=None):
 	empty = []
 	for k in xrange(kmin, kmax + 1):
 		# Nodes in the kcore
+		if k not in kcore:
+			continue
+
 		knodes = kcore[k].nodes()
 		knodes = [u for u in knodes if cnumber[u] == k]
 
@@ -447,11 +449,11 @@ def edgePriority(nedges, cnumber, cs, ci, cd, kcore, mode='alg_edge'):
 			#print(ci[v], ci[u], cd[v], cd[u])
 
 	edges = sorted(priority, key=priority.get, reverse=True)
-	
+
 	print('Prioritiy', priority[edges[0]], edges[0], cnumber[edges[0][0]], cnumber[edges[0][1]])
 	return edges
 
-
+"""
 def checkCoreChangeMat(mat, edges, cnumber):
 	nodes = []
 	for e in edges:
@@ -508,6 +510,8 @@ def checkCoreChangeMat(mat, edges, cnumber):
 	#print(len(whitelist), len(blacklist), len(edges))
 
 	return whitelist
+
+"""
 
 def edgeGroups(edges, cnumber, graph, pc):	
 	# Set of edges where the endpoints have same core number
@@ -604,28 +608,41 @@ def edgeGroups(edges, cnumber, graph, pc):
 	return el
 
 
-def _checkIfCoreNumberChange(graph, cnumber, e):
+def _checkIfCoreNumberChange(graph, cnumber, edges):
 	"""
 	Add edge and check if core number change
 
 	Returns true if change, false otherwise
 	"""
-	u = e[0]
-	v = e[1]
+	nodes = list(set([u for e in edges for u in e]))
 
-	if graph.has_edge(u,v):
-		print('Exist', u,v)
-		return True
-
-	graph.add_edge(u, v)
+	#print('Number of edges', graph.number_of_edges())
+	graph.add_edges_from(edges)
 	tcore = nx.core_number(graph)
-	graph.remove_edge(u, v)
+	graph.remove_edges_from(edges)
+	#print('Number of edges', graph.number_of_edges())
+	
+	changed = []
+	for u in nodes:
+		if cnumber[u] != tcore[u]:
+			changed.append(u)
 
-	if tcore[u] == cnumber[u] and tcore[v] == cnumber[v]:
-		return False
 
-	#print([(carray[u], tcore[u]) for u in carray])
-	return True
+	whitelist = []
+
+	#print('Number of candidates', len(edges))
+	for e in edges:
+		if e[0] not in changed and e[1] not in changed:
+			whitelist.append(e)
+		elif e[0] in changed and e[1] not in changed and cnumber[e[0]] > cnumber[e[1]]:
+			whitelist.append(e)
+		elif e[1] in changed and e[0] not in changed and cnumber[e[1]] > cnumber[e[0]]:
+			whitelist.append(e)
+	#blacklist = [e for e in edges if e not in whitelist]
+	#print(len(whitelist), len(blacklist), len(edges))
+	#print('Number of whitelist', len(edges), len(whitelist))
+	return whitelist
+
 
 
 def updateCandidateEdges(graph, nedges, cnumber, pc, edge):
@@ -655,7 +672,7 @@ def pruneCandidateEdges(graph, nedges, cnumber, pc):
 	Remove the edges which will change core number
 	"""
 
-	mat = nx.to_numpy_matrix(graph)
+	#mat = nx.to_numpy_matrix(graph)
 	#mat = sparse.csr_matrix(mat)
 
 	print('Edges before pruning: {}'.format(len(nedges)))
@@ -667,7 +684,8 @@ def pruneCandidateEdges(graph, nedges, cnumber, pc):
 	edges = set([])
 	for i in xrange(0, len(edge_group)):
 		e = edge_group[i]
-		whitelist = checkCoreChangeMat(mat, e, cnumber)
+		#whitelist = checkCoreChangeMat(mat, e, cnumber)
+		whitelist = _checkIfCoreNumberChange(graph, cnumber, e)
 		edges.update(whitelist)
 
 		if i % 500 == 0:
@@ -706,7 +724,8 @@ def updateCoreSubgraph(kcore, cnumber, u, v):
 	kmin = min(kcore.keys())
 
 	for k in xrange(kmin, kmax + 1):
-		kcore[k].add_edge(u,v)
+		if k in kcore:
+			kcore[k].add_edge(u,v)
 
 	return kcore
 
@@ -771,14 +790,14 @@ def main(fname, sname, k=None, m=10, mode='alg_edge'):
 
 	graph = readGraph(fname)
 
-	if graph.number_of_nodes() > 20000:
-		print('Graph too large')
-		return False
+	#if graph.number_of_nodes() > 20000:
+	#	print('Graph too large')
+	#	return False
 
 	print(nx.info(graph))
 
-	graph_matrix = nx.to_numpy_matrix(graph)
-	graph = nx.from_numpy_matrix(graph_matrix)
+	#graph_matrix = nx.to_numpy_matrix(graph)
+	#graph = nx.from_numpy_matrix(graph_matrix)
 	#graph_matrix = sparse.csr_matrix(graph_matrix)
 
 	cnumber = nx.core_number(graph)
@@ -816,7 +835,6 @@ def main(fname, sname, k=None, m=10, mode='alg_edge'):
 	ci, cd = getCoreInfluence(cnumber, kcore)
 	shell = getShellConnectedComponents(graph, cnumber)
 	
-	
 	print('\nMax core: {} \t Cut off: {}'.format(max(cvals), cutoff))
 	
 	nedges = generateCandidateEdges(graph, cnumber, cutoff, pc, nodes)
@@ -847,8 +865,8 @@ def main(fname, sname, k=None, m=10, mode='alg_edge'):
 		#print(cnumber[e[0]], cnumber[e[1]])
 
 		graph.add_edge(e[0],e[1])
-		graph_matrix[e[0],e[1]] = 1
-		graph_matrix[e[1],e[0]] = 1
+		#graph_matrix[e[0],e[1]] = 1
+		#graph_matrix[e[1],e[0]] = 1
 		
 		if mode != 'oracle':
 			i += 1

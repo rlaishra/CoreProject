@@ -179,7 +179,7 @@ def compare(x1, x2, k):
 
 def computeResilience(graph, exp, a = 0, mode='edges'):
 	k = [25, 50, 100]
-	p = range(0,51,10)
+	p = range(0,26,5)
 
 	results = {}
 
@@ -248,7 +248,7 @@ if __name__ == '__main__':
 	#graph = graph.subgraph(nodes)
 	ci = getCoreInfluence(cnumber, kcore)
 	cs = getCoreStrength(graph, cnumber)
-	results = computeResilience(graph, 5, x, mode)
+	results = computeResilience(graph, 10, x, mode)
 
 	# Means
 	ci_mean = np.mean(ci.values())

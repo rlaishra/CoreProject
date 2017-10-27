@@ -135,20 +135,24 @@ plotMeanCSRe <- function(fname, sname) {
   return(p)
 }
 
-plotCIRe <- function(fname, sname) {
+plotCIRe <- function(fname, sname, name) {
   data <- read.csv(fname, header = TRUE, sep = ',')
-  data <- data[which(data$n %in% c(25)),]
+  data <- data[which(data$n %in% c(50,100)),]
   
   p1 <- ggplot(data=data)
   p2 <- ggplot(data=data)
   p3 <- ggplot(data=data)
   
-  p1 <- p1 + geom_point(aes(x=cst_mean, y=cr, color=type))
-  p1 <- p1 + geom_errorbar(aes(x=cst_mean, ymin=cr-cr_s, ymax=cr + cr_s, color=type))
-  #p1 <- p1 + xlab(TeX('$\\frac{\\bar{CI_{95}(G)}}{\\bar{CI(G)}$')) + ylab(TeX('$R_{p}^{0,50}(G)$'))
-  p1 <- p1 + xlab(TeX('$\\bar{CS_{95}(G)}')) + ylab(TeX('$R_{p}^{0,50}(G)$'))
+  #p1 <- p1 + geom_point(aes(x=cst_mean, y=cr, color=type))
+  #p1 <- p1 + geom_errorbar(aes(x=cst_mean, ymin=cr-cr_s, ymax=cr + cr_s, color=type))
+  p1 <- p1 + geom_point(aes(x=cit_mean, y=cr, color=type))
+  p1 <- p1 + geom_errorbar(aes(x=cit_mean, ymin=cr-cr_s, ymax=cr + cr_s, color=type))
+  p1 <- p1 + xlab(TeX('$\\frac{\\bar{CI_{95}(G)}}{\\bar{CI(G)}$')) + ylab(TeX('$R_{p}^{e(0,50)}(G)$'))
+  #p1 <- p1 + xlab(TeX('$\\bar{CS_{95}(G)}')) + ylab(TeX('$R_{p}^{e(0,50)}(G)$'))
   p1 <- p1 + theme_bw()
-  p1 <- p1 + scale_x_log10()
+  #p1 <- p1 + scale_x_log10()
+  p1 <- p1 + labs(title = name, color='Network Type')
+  p1 <- p1 + theme(legend.position="bottom")
   p1 <- p1 + facet_grid(.~n)
   
   return(p1)
@@ -274,7 +278,7 @@ plotTopCIRe <- function(fname, name) {
 
 resilianceChange <- function(fname, name, sname) {
   data <- read.csv(fname, header = TRUE, sep = ',')
-  data <- data[which(data$n %in% c(25, 50)),]
+  data <- data[which(data$n %in% c(25, 50, 100)),]
   #data <- data[which(data$name <= 2),]
   
   pl <- ggplot(data=data)
@@ -283,11 +287,11 @@ resilianceChange <- function(fname, name, sname) {
   pl <- pl + geom_line(aes(y=cr, x=name, group=type, color=factor(type)))
   pl <- pl + geom_point(aes(y=cr, x=name, group=type, color=factor(type)))
   pl <- pl + geom_ribbon(aes(ymin=cr-cr_s, ymax=cr+cr_s, x=name, group=type, fill=factor(type)), alpha=0.2)
-  pl <- pl + xlab('Nodes added') + ylab(TeX('$R_{25}^{0,100}(G)$'))
+  pl <- pl + xlab('Nodes added') + ylab(TeX('$R_{r}^{n(0,25)}(G)$'))
   pl <- pl + theme_bw()
-  pl <- pl + guides(fill=FALSE)
-  #pl <- pl + labs(title = name, color='Algorithm')
-  pl <- pl + labs(color='Algorithm')
+  pl <- pl + guides(fill=FALSE, color=FALSE)
+  pl <- pl + labs(title = name, color='Algorithm')
+  #pl <- pl + labs(color='Algorithm')
   pl <- pl + facet_grid(. ~ n)
   
   #tikz(file = sname, width = 4, height = 3, standAlone = TRUE)
