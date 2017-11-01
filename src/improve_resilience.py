@@ -157,13 +157,13 @@ def getCoreStrength(graph, cnumber, nodes=None):
 	for u in nodes:
 		neighbors = graph.neighbors(u)
 		cd = len([v for v in neighbors if cnumber[u] <= cnumber[v]])
-		data[u] = cd - cnumber[u]
+		data[u] = cd - cnumber[u] + 1
 
-	smax = max(data.values())
-	smin = min(data.values())
+	#smax = max(data.values())
+	#smin = min(data.values())
 
-	for u in data:
-		data[u] = (data[u] - smin)/(smax - smin)
+	#for u in data:
+	#	data[u] = (data[u] - smin)/(smax - smin)
 
 	return data
 
@@ -208,106 +208,30 @@ def updateCoreInfluence(graph, cnumber, kcore, ci, cd, edge):
 
 	return ci
 
-def _ciPriority(ci, cs, cnumber, kcore, cd, u, v, n, m, model='random'):
+def _ciPriority(ci, cs, cnumber, kcore, cd, u, v):
 	"""
 	Returns the combined decrease in ci of higher core number nodes
 	if u and v are connected
 	"""
-	epsilon = 0.001
+	#epsilon = 0.001
 	p = 0
 
 	if cnumber[u] >= cnumber[v]:
-		s = [ci[x] for x in n[v] ] + [ci[x] for x in m[v]]
-		d = ci[v]/(cs[v] + epsilon)
-		p += np.mean(s) * d
+		#s = [ci[x] for x in n[v] ] + [ci[x] for x in m[v]]
+		#d = ci[v]/(cs[v] + epsilon)
+		#p += d
+
+		p += ci[v] / cs[v]
 
 
 	if cnumber[u] <= cnumber[v]:
-		s = [ci[x] for x in n[u] ] + [ci[x] for x in m[u]]
-		d = ci[u]/(cs[u] + epsilon)
-		p += np.mean(s) * d
+		#s = [ci[x] for x in n[u] ] + [ci[x] for x in m[u]]
+		#d = ci[u]/(cs[u] + epsilon)
+		#p += np.mean(s) * d
+
+		p += ci[u] / cs[u]
 
 	return p
-
-
-	if cnumber[u] == cnumber[v]:
-		s1 = [ci[x] for x in n[u] ] + [ci[x] for x in m[u]]
-		s2 = [ci[x] for x in n[v] ] + [ci[x] for x in m[v]]
-
-		d1 = ci[u]/(cs[u] + epsilon)
-		d2 = ci[v]/(cs[v] + epsilon)
-
-		return np.mean(s1)  + np.mean(s2)
-
-		delta = []
-		if cnumber[u] > len(n[u]):
-			s1 += cd[u] - ci[u]
-			s1 -= cd[u] - cd[u] * (len(n[u]) + 1) / cnumber[u]
-			delta += [x for x in m[u]]
-			#s1 = s1 / len(m[u])
-			#print(s1)
-			#s1 = s1 * np.mean([ci[x] for x in m[u]])
-		if cnumber[v] > len(n[v]):
-			s2 += cd[v] - ci[v]
-			s2 -= cd[v] - cd[v] * (len(n[v]) + 1) / cnumber[v]
-			delta += [x for x in m[v]]
-			#s2 = s2 / len(m[v])
-			#print(s2)
-			#s2 = s2 * np.mean([ci[x] for x in m[v]])
-		#print(s1 + s2)
-		#if u == 651 and v == 2044:
-		#	print('same', u, v, cnumber[u], n[u], n[v], m[u], m[v], ci[u], ci[v], cd[u], cd[v], s1, s2)
-		s = s1 + s2
-
-		if len(delta) > 0:
-			s = s * np.mean([cd[x] for x in set(delta)])
-		return s
-
-	if cnumber[u] < cnumber[v]:
-		s = [ci[x] for x in n[u] ] + [ci[x] for x in m[u]]
-		return np.mean(s)
-
-	if cnumber[u] > cnumber[v]:
-		s = [ci[x] for x in n[v] ] + [ci[x] for x in m[v]]
-		return np.mean(s)
-
-	return 0
-
-	if cnumber[u] < cnumber[v] and cnumber[u] > len(n[u]) and len(m[u]) > 0:
-		s = 0
-		s += (cd[u] - ci[u])/len(m[u])
-		s -= (cd[u] - ci[u])/(len(m[u]) + 1)
-		#s = s * np.mean([ci[x] for x in m[u]])
-
-		mvals = []
-		for x in m[u]:
-			mvals.append((cd[x] - s)*len(n[x])/cnumber[x])
-
-		vval = (cd[v] + s) * len(n[v])/cnumber[v]
-
-		if max(mvals) > vval:
-			return s * np.mean([cd[x] for x in m[u]])
-		else:
-			return 0
-
-	if cnumber[u] > cnumber[v] and cnumber[v] > len(n[v]) and len(m[v]) > 0:
-		s = 0
-		s += (cd[v] - ci[v])/len(m[v])
-		s -= (cd[v] - ci[v])/(len(m[v]) + 1)
-		#s = s * np.mean([ci[x] for x in m[v]])
-		
-		mvals = []
-		for x in m[v]:
-			mvals.append((cd[x] - s)*len(n[x])/cnumber[x])
-
-		vval = (cd[u] + s) * len(n[u])/cnumber[u]
-
-		if max(mvals) > vval:
-			return s * np.mean([cd[x] for x in m[v]])
-		else:
-			return 0
-	
-	return 0
 
 
 def getCoreInfluence(cnumber, kcore, nodes=None):
@@ -393,6 +317,10 @@ def baselinePriority(nedges, cnumber, degree, mode='random'):
 	nedges = list(nedges)
 	if mode == 'random':
 		np.random.shuffle(nedges)
+		if len(nedges) > 1000000:
+			nedges = nedges[:int(0.1 * len(nedges))]
+		elif len(nedges) > 10000:
+			nedges = nedges[:int(0.5 * len(nedges))]
 		return nedges
 	if mode == 'degree':
 		priority = {}
@@ -400,6 +328,12 @@ def baselinePriority(nedges, cnumber, degree, mode='random'):
 			u = e[0]
 			v = e[1]
 			priority[e] = 0.5 * (degree[u] + degree[v])
+		if len(nedges) > 1000000:
+			threshold = np.percentile(priority.values(),90)
+			priority = {e:priority[e] for e in priority if priority[e] >= threshold}
+		elif len(nedges) > 2000:
+			threshold = np.median(priority.values())
+			priority = {e:priority[e] for e in priority if priority[e] >= threshold}
 		edges = sorted(priority, key=priority.get, reverse=True)
 		return edges
 	if mode == 'core':
@@ -408,17 +342,24 @@ def baselinePriority(nedges, cnumber, degree, mode='random'):
 			u = e[0]
 			v = e[1]
 			priority[e] = 0.5 * (cnumber[u] + cnumber[v])
+		if len(nedges) > 1000000:
+			threshold = np.percentile(priority.values(),90)
+			priority = {e:priority[e] for e in priority if priority[e] >= threshold}
+		elif len(nedges) > 2000:
+			threshold = np.median(priority.values())
+			priority = {e:priority[e] for e in priority if priority[e] >= threshold}
+
 		edges = sorted(priority, key=priority.get, reverse=True)
 		return edges
 
 
-def edgePriority(nedges, cnumber, cs, ci, cd, kcore, mode='alg_edge'):
+def edgePriority(nedges, cnumber, cs, ci, cd, kcore):
 	priority = {}
-	n = {}
-	m = {}
+	#n = {}
+	#m = {}
 	
-	for u in cnumber:
-		n[u], m[u] = _getSupportNodes(kcore[cnumber[u]], cnumber, u)
+	#for u in cnumber:
+	#	n[u], m[u] = _getSupportNodes(kcore[cnumber[u]], cnumber, u)
 
 	for e in nedges:
 		e = list(e)
@@ -428,7 +369,16 @@ def edgePriority(nedges, cnumber, cs, ci, cd, kcore, mode='alg_edge'):
 		#if u == 651 or u == 2044:
 		#	print(u, cnumber[u], n[u], m[u], ci[u], cd[u], cs[u])
 
-		priority[(u,v)] = _ciPriority(ci, cs, cnumber, kcore, cd, u, v, n, m)
+		priority[(u,v)] = _ciPriority(ci, cs, cnumber, kcore, cd, u, v)
+
+	# The priority can never increase
+	# So, filter out ones with less than median priority
+	if len(nedges) > 1000000:
+		threshold = np.percentile(priority.values(),90)
+		priority = {e:priority[e] for e in priority if priority[e] >= threshold}
+	elif len(nedges) > 2000:
+		threshold = np.median(priority.values())
+		priority = {e:priority[e] for e in priority if priority[e] >= threshold}
 
 	edges = sorted(priority, key=priority.get, reverse=True)
 	print(len(edges), len(nedges))
@@ -869,17 +819,23 @@ def main(fname, sname, k=None, m=10, mode='alg_edge'):
 		k = 100
 	else:
 		cutoff = sorted(cvals, reverse=True)[int(len(cnumber)*k/100)]
+
+	cutoff = np.percentile(cvals, 75)
 		
 	step = int(graph.number_of_edges()/400)
+	#ustep = int(step/10) + 1
+	ustep = step
 
-	if mode == 'alg_edge' or mode == 'alg_node' or mode == 'alg_both':
-		nodes = set([u for u in cnumber if cnumber[u] >= cutoff])
+	if mode == 'cics':
+		nodes = set([u for u in cnumber if cnumber[u] > cutoff])
 	elif mode == 'core':
 		nodes = set(sorted(cnumber, key=cnumber.get, reverse=True)[0:int(len(cnumber)*0.1)])
 	elif mode == 'degree':
+		#nodes = set(random.sample(cnumber.keys(), int(len(degree)*0.1)))
 		nodes = set(sorted(degree, key=degree.get, reverse=True)[0:int(len(degree)*0.1)])
 	elif mode == 'random':
 		nodes = set(random.sample(cnumber.keys(), int(len(degree)*0.1)))
+		#nodes = set([u for u in cnumber if cnumber[u] > cutoff])
 	elif mode == 'oracle':
 		nodes = set([u for u in cnumber if cnumber[u] >= cutoff])
 
@@ -895,10 +851,9 @@ def main(fname, sname, k=None, m=10, mode='alg_edge'):
 	nedges = generateCandidateEdges(graph, cnumber, cutoff, pc, nodes)
 	print('Number of candidate: {}'.format(len(nedges)))
 
-	if mode == 'alg_edge' or mode == 'alg_node' or mode == 'alg_both':
-		print(len(nedges))
-		nedges = edgePriority(nedges, cnumber, cs, ci, cd, kcore, mode)
-	elif mode == 'random' or mode == 'core' or mode == 'random':
+	if mode == 'cics':
+		nedges = edgePriority(nedges, cnumber, cs, ci, cd, kcore)
+	elif mode == 'random' or mode == 'core' or mode == 'degree':
 		nedges = baselinePriority(nedges, cnumber, degree, mode)
 	elif mode == 'oracle':
 		nedges = list(nedges)
@@ -934,7 +889,7 @@ def main(fname, sname, k=None, m=10, mode='alg_edge'):
 		if mode != 'oracle':
 			i += 1
 
-		if i%10 == 0:
+		if i%ustep == 0 or len(nedges) < len(cedges):
 			#mcd = updateMCD(graph, cnumber, mcd, e)
 			#pc = updatePureCore(graph, cnumber, mcd, pc, e)
 			#nedges = updateCandidateEdges(graph, nedges, cnumber, pc, e)
@@ -947,14 +902,14 @@ def main(fname, sname, k=None, m=10, mode='alg_edge'):
 			pc = generatePureCore(graph, cnumber, mcd)
 			nedges = pruneCandidateEdges(graph, nedges, cnumber, pc)
 
-		if mode == 'alg_edge' or mode == 'alg_node' or mode == 'alg_both':
+		if mode == 'cics':
 			#kcore = generateCoreSubgraph(graph, cnumber)
-			if i % 10 == 0:
+			if i % ustep == 0 or len(nedges) < len(cedges):
 				#kcore = updateCoreSubgraph(kcore, cnumber, e[0], e[1])
 				kcore = generateCoreSubgraph(graph, cnumber)
 				cs = getCoreStrength(graph, cnumber)
 				ci, cd = getCoreInfluence(cnumber, kcore)
-				nedges = edgePriority(nedges, cnumber, cs, ci, cd, kcore, mode)
+				nedges = edgePriority(nedges, cnumber, cs, ci, cd, kcore)
 				#cnodes = []
 			#else:
 			#	cnodes += [e[0], e[1]]
@@ -962,7 +917,8 @@ def main(fname, sname, k=None, m=10, mode='alg_edge'):
 		elif mode == 'oracle':
 			nedges = list(nedges)
 		else:
-			nedges = baselinePriority(nedges, cnumber, graph.degree(), mode=mode)
+			if i % ustep == 0 or len(nedges) < len(cedges):
+				nedges = baselinePriority(nedges, cnumber, graph.degree(), mode=mode)
 
 		if i%step == 0 and mode != 'oracle':
 			tsname = sname + '_' + mode + '_'  + '_k_' + str(k) + '_' + str(float(i/(step*4))) + '.csv'
@@ -978,6 +934,7 @@ def main(fname, sname, k=None, m=10, mode='alg_edge'):
 		if i%1000 and mode == 'oracle':
 			print('Edges left: {]'.format(len(nedges)))
 			print(nx.info(graph))
+		print('time', t)
 
 	if mode == 'oracle':
 		tsname = sname + '_oracle.csv'
@@ -986,7 +943,8 @@ def main(fname, sname, k=None, m=10, mode='alg_edge'):
 		print(nx.info(graph))
 		nx.write_edgelist(graph, tsname, data=False)
 
-	print(t, file=open(sname+'_time','w'))
+	if mode == 'cics':
+		print(t, file=open(sname+'_time','w'))
 
 
 if __name__ == '__main__':

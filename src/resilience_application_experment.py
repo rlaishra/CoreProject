@@ -80,13 +80,12 @@ ntype = [
 'BIO'
 ]
 
-sname = 'outputs/oct_27/resilience/original_nodes_01.csv'
+sname = 'outputs/oct_28/applications/community_rw.csv'
 
-mode = 'nodes'
+mode = '1'
 
 if __name__ == '__main__':
 	for i in xrange(0, len(fnames)):
-		n = 1 if i == 0 else 0
-		command = 'python src/csci.py {} {} {} {} {} {} {}'.format(fnames[i], sname, names[i], n, ntype[i], mode, 0 )
+		command = 'python src/resilience_application.py {} {} {} {} {} {}'.format(mode, fnames[i], sname, names[i], ntype[i], mode )
 		print(command)
 		os.system(command)

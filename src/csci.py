@@ -28,6 +28,8 @@ def readGraph(fname):
 			graph = nx.read_edgelist(fname, delimiter=' ')
 
 	graph.remove_edges_from(graph.selfloop_edges())
+	isolates = nx.isolates(graph)
+	graph.remove_nodes_from(isolates)
 	#print(nx.info(graph))
 	return graph
 
@@ -99,7 +101,7 @@ def getCoreStrength(graph, cnumber):
 	for u in cnumber:
 		neighbors = graph.neighbors(u)
 		cd = len([v for v in neighbors if cnumber[u] <= cnumber[v]])
-		data[u] = cd - cnumber[u]
+		data[u] = cd - cnumber[u] + 1
 		#data[u] = data[u]/m
 		
 	return data
@@ -115,7 +117,7 @@ def generateCoreSubgraph(graph, cnumber):
 
 
 def saveData(sname, data, n):
-	if n:
+	if n and False:
 		f = open(sname, 'w')
 	else:
 		f = open(sname, 'a')
@@ -132,7 +134,8 @@ def nodesOrder(graph):
 	nodes = list(graph.nodes())
 	return tuple(nodes)
 
-def coreNumber(graph, nodes):
+def coreNumber(graph):
+	nodes = graph.nodes()
 	cn = nx.core_number(graph)
 	cn = {u:cn[u] for u in nodes if u in cn}
 	return cn
@@ -152,6 +155,7 @@ def removeNodes(graph, num):
 	for u in rnodes:
 		redges += list([(u,v) for v in graph.neighbors(u)])
 	graph.remove_edges_from(redges)
+	#graph.remove_nodes_from(rnodes)
 	return graph
 
 def compare(x1, x2, k):
@@ -181,8 +185,9 @@ def compare(x1, x2, k):
 	return cor
 
 def computeResilience(graph, exp, a = 0, mode='edges'):
-	k = [25, 50, 100]
-	p = range(0,26,5)
+	step = 5
+	k = [50]
+	p = range(0,51,step)
 
 	results = {}
 
@@ -192,29 +197,40 @@ def computeResilience(graph, exp, a = 0, mode='edges'):
 	 	adata = []
 
 	 	while x < exp:
+	 		graph = readGraph(fname)
+	 		if mode == 'edges':
+		 		num = int(graph.number_of_edges()*step/(100 * (1 + a/100)))
+		 		#print('Numbers: {}'.format(num))
+		 	elif mode == 'nodes':
+		 		num = int(graph.number_of_nodes()*step/(100 * (1 + a/100)))
+		 		#print('Numbers: {}'.format(num))
+		 	else:
+		 		print('Incorrect Mode')
+		 		return False
+
+		 	#nodes = nodesOrder(graph)
+
+	 		# The baseline core numbers
+	 		ocn = coreNumber(graph)
+
 	 		tdata = []
 	 		for y in p:
-		 		graph = readGraph(fname)
-	 			nodes = nodesOrder(graph)
-
-	 			# The baseline core numbers
-	 			ocn = coreNumber(graph, nodes)
-
 	 			if mode == 'edges':
-		 			num = int(graph.number_of_edges()*y/(100 * (1 + a/100)))
 		 			graph = removeEdges(graph, num)
 		 		elif mode == 'nodes':
-		 			num = int(graph.number_of_nodes()*y/(100 * (1 + a/100)))
 		 			graph = removeNodes(graph, num)
 		 		else:
 		 			print('Incorrect Mode')
 		 			return False
 
-	 			ncn = coreNumber(graph, nodes)
+	 			ncn = coreNumber(graph)
 
-	 			cor = compare(ocn, ncn, z)
+	 			cor = compare(ocn, ncn, z) 
+	 			cor = cor + (1-cor)*a/100
+	 			#cor = cor + (cor)*a/100
+
 	 			tdata.append(cor)
-	 			#print(y, tdata)
+	 			#print(y, tdata) 
 
 	 		adata.append(np.mean(tdata))
 	 		#print(tdata)
@@ -251,7 +267,7 @@ if __name__ == '__main__':
 	#graph = graph.subgraph(nodes)
 	ci = getCoreInfluence(cnumber, kcore)
 	cs = getCoreStrength(graph, cnumber)
-	results = computeResilience(graph, 10, x, mode)
+	results = computeResilience(graph, 5, x, mode)
 
 	# Means
 	ci_mean = np.mean(ci.values())

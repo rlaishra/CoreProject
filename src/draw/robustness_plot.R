@@ -1,7 +1,7 @@
 library('ggplot2')
 require(gridExtra)
 library(latex2exp)
-library(tikzDevice)
+#library(tikzDevice)
 
 robustnessPK <- function(fname, name, n) {
   data <- read.csv(fname, header = TRUE, sep = ',')
@@ -137,23 +137,27 @@ plotMeanCSRe <- function(fname, sname) {
 
 plotCIRe <- function(fname, sname, name) {
   data <- read.csv(fname, header = TRUE, sep = ',')
-  data <- data[which(data$n %in% c(50,100)),]
+  #data <- data[which(data$n %in% c(100)),]
   
   p1 <- ggplot(data=data)
   p2 <- ggplot(data=data)
   p3 <- ggplot(data=data)
   
-  p1 <- p1 + geom_point(aes(x=cst_mean, y=cr, color=type))
-  p1 <- p1 + geom_errorbar(aes(x=cst_mean, ymin=cr-cr_s, ymax=cr + cr_s, color=type))
+  p1 <- p1 + geom_point(aes(x=cst_mean + 1, y=cr, color=type))
+  p1 <- p1 + geom_errorbar(aes(x=cst_mean + 1, ymin=cr-cr_s, ymax=cr + cr_s, color=type))
   #p1 <- p1 + geom_point(aes(x=cit_mean, y=cr, color=type))
   #p1 <- p1 + geom_errorbar(aes(x=cit_mean, ymin=cr-cr_s, ymax=cr + cr_s, color=type))
-  #p1 <- p1 + xlab(TeX('$\\frac{\\bar{CI_{95}(G)}}{\\bar{CI(G)}$')) + ylab(TeX('$R_{p}^{e(0,50)}(G)$'))
-  p1 <- p1 + xlab(TeX('$\\bar{CS_{95}(G)}')) + ylab(TeX('$R_{p}^{n(0,50)}(G)$'))
+  #p1 <- p1 + xlab(TeX('$\\frac{\\bar{CI_{95}(G)}}{\\bar{CI(G)}$')) + ylab(TeX('$R_{p}^{n(0,50)}(G)$'))
+  p1 <- p1 + xlab(TeX('Core Influence-Strength ($CIS_{95}(G))')) + ylab(TeX('Core Resilience ($R_{p}^{n(0,50)}(G)$)'))
   p1 <- p1 + theme_bw()
   p1 <- p1 + scale_x_log10()
-  p1 <- p1 + labs(title = name, color='Network Type')
+  p1 <- p1 + labs(color='Network Type')
   p1 <- p1 + theme(legend.position="bottom")
-  p1 <- p1 + facet_grid(.~n)
+  #p1 <- p1 + facet_grid(.~n)
+  
+  tikz(file = sname, width = 4, height = 2.5, standAlone = TRUE)
+  print(p1)
+  dev.off()
   
   return(p1)
   
@@ -276,27 +280,73 @@ plotTopCIRe <- function(fname, name) {
   return(p)
 }
 
-resilianceChange <- function(fname, name, sname) {
+resilianceChange <- function(fname, sname) {
   data <- read.csv(fname, header = TRUE, sep = ',')
-  data <- data[which(data$n %in% c(25, 50, 100)),]
-  data <- data[which(data$name <= 2),]
+  data <- data[which(data$n %in% c(50)),]
+  d <- data[which(data$type == "CICS"),]
   
   pl <- ggplot(data=data)
   
   
   pl <- pl + geom_line(aes(y=cr, x=name, group=type, color=factor(type)))
   pl <- pl + geom_point(aes(y=cr, x=name, group=type, color=factor(type)))
-  pl <- pl + geom_ribbon(aes(ymin=cr-cr_s, ymax=cr+cr_s, x=name, group=type, fill=factor(type)), alpha=0.2)
-  pl <- pl + xlab('Nodes added') + ylab(TeX('$R_{r}^{n(0,25)}(G)$'))
-  pl <- pl + theme_bw()
-  pl <- pl + guides(fill=FALSE, color=FALSE)
-  pl <- pl + labs(title = name, color='Algorithm')
+  pl <- pl + geom_ribbon(data = d, aes(ymin=cr-cr_s, ymax=cr+cr_s, x=name, group=type, fill=factor(type)), alpha=0.2)
+  #pl <- pl + xlab('Edges added (\\%)') + ylab(TeX('Core Resilince $R_{50}^{e(0,25)}(G)$'))
+  pl <- pl + xlab('Edges added (\\%)') + ylab('Core Resilince')
+  pl <- pl + theme_bw() + theme(text = element_text(size=10))
+  #pl <- pl + guides(fill=FALSE, color=FALSE)
+  pl <- pl + guides(fill=FALSE)
+  pl <- pl + labs(color='')
+  pl <- pl + theme(legend.position="bottom")
   #pl <- pl + labs(color='Algorithm')
-  pl <- pl + facet_grid(. ~ n)
+  #pl <- pl + facet_grid(. ~ n)
   
-  #tikz(file = sname, width = 4, height = 3, standAlone = TRUE)
-  #print(pl)
-  #dev.off()
+  tikz(file = sname, width = 4, height = 2.4, standAlone = TRUE)
+  print(pl)
+  dev.off()
+  
+  return(pl)
+}
+
+plotApplicationAnomaly <- function(fname, sname) {
+  data <- read.csv(fname, header = TRUE, sep = ',')
+  data <- data[which(data$s %in% c(0.5)),]
+  
+  pl <- ggplot(data=data)
+  
+  
+  pl <- pl + geom_errorbar(aes(ymin=mean - std, ymax=mean + std, x=resilience, color=factor(tname)))
+  pl <- pl + geom_point(aes(y=mean, x=resilience, color=factor(tname)))
+  #pl <- pl + geom_ribbon(aes(ymin=cr-cr_s, ymax=cr+cr_s, x=name, group=type, fill=factor(type)), alpha=0.2)
+  pl <- pl + xlab('Core Resilience') + ylab('Jaccrd Similarity')
+  pl <- pl + theme_bw()
+  #pl <- pl + guides(fill=FALSE, color=FALSE)
+  pl <- pl + labs(color='Network Type')
+  pl <- pl + theme(legend.position="bottom")
+  #pl <- pl + labs(color='Algorithm')
+  #pl <- pl + facet_grid(. ~ n)
+  
+  tikz(file = sname, width = 4, height = 3, standAlone = TRUE)
+  print(pl)
+  dev.off()
+  
+  return(pl)
+}
+
+plotRunnigTime <- function(fname, sname) {
+  data <- read.csv(fname, header = TRUE, sep = ',')
+  
+  pl <- ggplot(data=data)
+  pl <- pl + geom_point(aes(x=added,y=time,group=factor(network), color=factor(network)))
+  pl <- pl + geom_line(aes(x=added,y=time,group=factor(network), color=factor(network)))
+  pl <- pl + labs(color='')
+  pl <- pl + xlab('Edges Added (\\%)') + ylab('Time (seconds)')
+  pl <- pl + theme_bw() + theme(text = element_text(size=8))
+  pl <- pl + theme(legend.position="bottom")
+  
+  tikz(file = sname, width = 4, height = 3, standAlone = TRUE)
+  print(pl)
+  dev.off()
   
   return(pl)
 }
