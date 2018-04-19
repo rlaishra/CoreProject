@@ -1,7 +1,7 @@
 library('ggplot2')
 require(gridExtra)
 library(latex2exp)
-#library(tikzDevice)
+library(tikzDevice)
 
 robustnessPK <- function(fname, name, n) {
   data <- read.csv(fname, header = TRUE, sep = ',')
@@ -137,7 +137,7 @@ plotMeanCSRe <- function(fname, sname) {
 
 plotCIRe <- function(fname, sname, name) {
   data <- read.csv(fname, header = TRUE, sep = ',')
-  #data <- data[which(data$n %in% c(100)),]
+  data <- data[which(data$n %in% c(100)),]
   
   p1 <- ggplot(data=data)
   p2 <- ggplot(data=data)
@@ -148,11 +148,11 @@ plotCIRe <- function(fname, sname, name) {
   #p1 <- p1 + geom_point(aes(x=cit_mean, y=cr, color=type))
   #p1 <- p1 + geom_errorbar(aes(x=cit_mean, ymin=cr-cr_s, ymax=cr + cr_s, color=type))
   #p1 <- p1 + xlab(TeX('$\\frac{\\bar{CI_{95}(G)}}{\\bar{CI(G)}$')) + ylab(TeX('$R_{p}^{n(0,50)}(G)$'))
-  p1 <- p1 + xlab(TeX('Core Influence-Strength ($CIS_{95}(G))')) + ylab(TeX('Core Resilience ($R_{p}^{n(0,50)}(G)$)'))
+  p1 <- p1 + xlab('Core Influence-Strength') + ylab('Core Resilience')
   p1 <- p1 + theme_bw()
   p1 <- p1 + scale_x_log10()
-  p1 <- p1 + labs(color='Network Type')
-  p1 <- p1 + theme(legend.position="bottom")
+  #p1 <- p1 + labs(color='Network Type')
+  p1 <- p1 + theme(legend.position="none")
   #p1 <- p1 + facet_grid(.~n)
   
   tikz(file = sname, width = 4, height = 2.5, standAlone = TRUE)
@@ -318,15 +318,16 @@ plotApplicationAnomaly <- function(fname, sname) {
   pl <- pl + geom_errorbar(aes(ymin=mean - std, ymax=mean + std, x=resilience, color=factor(tname)))
   pl <- pl + geom_point(aes(y=mean, x=resilience, color=factor(tname)))
   #pl <- pl + geom_ribbon(aes(ymin=cr-cr_s, ymax=cr+cr_s, x=name, group=type, fill=factor(type)), alpha=0.2)
-  pl <- pl + xlab('Core Resilience') + ylab('Jaccrd Similarity')
+  pl <- pl + xlab('Core Resilience') + ylab('Jaccard Similarity')
   pl <- pl + theme_bw()
   #pl <- pl + guides(fill=FALSE, color=FALSE)
   pl <- pl + labs(color='Network Type')
-  pl <- pl + theme(legend.position="bottom")
+  pl <- pl + theme(legend.position="none")
+  #pl <- pl + scale_x_reverse()
   #pl <- pl + labs(color='Algorithm')
   #pl <- pl + facet_grid(. ~ n)
   
-  tikz(file = sname, width = 4, height = 3, standAlone = TRUE)
+  tikz(file = sname, width = 4, height = 2.5, standAlone = TRUE)
   print(pl)
   dev.off()
   
@@ -341,10 +342,10 @@ plotRunnigTime <- function(fname, sname) {
   pl <- pl + geom_line(aes(x=added,y=time,group=factor(network), color=factor(network)))
   pl <- pl + labs(color='')
   pl <- pl + xlab('Edges Added (\\%)') + ylab('Time (seconds)')
-  pl <- pl + theme_bw() + theme(text = element_text(size=8))
-  pl <- pl + theme(legend.position="bottom")
+  pl <- pl + theme_bw()
+  pl <- pl + theme(legend.position="none")
   
-  tikz(file = sname, width = 4, height = 3, standAlone = TRUE)
+  tikz(file = sname, width = 4, height = 2.5, standAlone = TRUE)
   print(pl)
   dev.off()
   

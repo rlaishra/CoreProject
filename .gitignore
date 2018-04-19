@@ -24,3 +24,7 @@ hamster_10_error.csv
 *.gz
 
 *.log
+
+outputs/test
+
+outputs/test

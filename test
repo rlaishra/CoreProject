@@ -1,4 +1,4 @@
-% Created by tikzDevice version 0.10.1 on 2017-10-28 13:59:56
+% Created by tikzDevice version 0.10.1 on 2017-10-23 12:12:20
 % !TEX encoding = UTF-8 Unicode
 \documentclass[10pt]{article}
 \usepackage{tikz}
@@ -10,7 +10,9 @@
 \setlength\PreviewBorder{0pt}
 \begin{document}
 
-\begin{tikzpicture}[x=1pt,y=1pt]
+
+\end{document}
+re}[x=1pt,y=1pt]
 \definecolor{fillColor}{RGB}{255,255,255}
 \path[use as bounding box,fill=fillColor,fill opacity=0.00] (0,0) rectangle (144.54,144.54);
 \begin{scope}
@@ -2116,4 +2118,38 @@
 \path[clip] (  0.00,  0.00) rectangle (144.54,144.54);
 \definecolor{drawColor}{RGB}{0,0,0}
 
-\node[text=drawColor,anchor=base west,inn
+\node[text=drawColor,anchor=base west,inner sep=0pt, outer sep=0pt, scale=  0.88] at ( 72.03, 29.84) {AS};
+\end{scope}
+\begin{scope}
+\path[clip] (  0.00,  0.00) rectangle (144.54,144.54);
+\definecolor{drawColor}{RGB}{0,0,0}
+
+\node[text=drawColor,anchor=base west,inner sep=0pt, outer sep=0pt, scale=  0.88] at ( 72.03, 15.39) {BIO};
+\end{scope}
+\begin{scope}
+\path[clip] (  0.00,  0.00) rectangle (144.54,144.54);
+\definecolor{drawColor}{RGB}{0,0,0}
+
+\node[text=drawColor,anchor=base west,inner sep=0pt, outer sep=0pt, scale=  0.88] at (106.35, 29.84) {CA};
+\end{scope}
+\begin{scope}
+\path[clip] (  0.00,  0.00) rectangle (144.54,144.54);
+\definecolor{drawColor}{RGB}{0,0,0}
+
+\node[text=drawColor,anchor=base west,inner sep=0pt, outer sep=0pt, scale=  0.88] at (106.35, 15.39) {INF};
+\end{scope}
+\begin{scope}
+\path[clip] (  0.00,  0.00) rectangle (144.54,144.54);
+\definecolor{drawColor}{RGB}{0,0,0}
+
+\node[text=drawColor,anchor=base west,inner sep=0pt, outer sep=0pt, scale=  0.88] at (139.93, 29.84) {P2P};
+\end{scope}
+\begin{scope}
+\path[clip] (  0.00,  0.00) rectangle (144.54,144.54);
+\definecolor{drawColor}{RGB}{0,0,0}
+
+\node[text=drawColor,anchor=base west,inner sep=0pt, outer sep=0pt, scale=  0.88] at (139.93, 15.39) {SOC};
+\end{scope}
+\end{tikzpicture}
+
+\end{document}
